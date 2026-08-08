@@ -122,7 +122,7 @@ function renderMembers() {
       ${member.mediaId
         ? renderMedia(MEDIA_BY_ID[member.mediaId], {
           className: "member-card__media media-figure--portrait",
-          loading: "lazy",
+          loading: index === 0 ? "eager" : "lazy",
           compactCredit: true,
           frameClass: "member-card__avatar",
         })

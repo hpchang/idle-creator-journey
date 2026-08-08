@@ -80,12 +80,17 @@ test("licensed media assets are local, traceable, distinct, and placement-driven
   assert.equal(MEDIA_BY_PLACEMENT.hero?.id, "idle-mma-2024");
   assert.equal(MEDIA_BY_PLACEMENT.debut?.id, "idle-debut-2018");
   assert.equal(MEDIA_BY_PLACEMENT.renewal?.id, "idle-tacoma-2024");
-  assert.equal(MEDIA_BY_PLACEMENT["member:shuhua"], undefined, "Shuhua keeps the reviewed name-card fallback");
+  assert.equal(MEDIA_BY_PLACEMENT["member:shuhua"]?.id, "shuhua-amsterdam-2023");
+  assert.deepEqual(
+    MEMBERS.map((member) => MEDIA_BY_ID[member.mediaId]?.source.author),
+    Array(5).fill("Robbie Klinkenberg"),
+    "all five member portraits should come from the same photographer and concert series",
+  );
 
   for (const source of MEDIA_SOURCES) {
     assert.match(source.filePageUrl, /^https:\/\/commons\.wikimedia\.org\//);
     assert.match(source.originalUrl, /^https:\/\/upload\.wikimedia\.org\//);
-    assert.match(source.licenseUrl, /^https:\/\/creativecommons\.org\/licenses\/by\/\d\.0\//);
+    assert.match(source.licenseUrl, /^https:\/\/creativecommons\.org\/licenses\/by(?:-sa)?\/\d\.0\//);
     assert.ok(source.author && source.creditText && source.reviewEvidence && source.accessedAt && source.rightsNotice);
     assert.equal(source.reviewStatus, "approved");
     const originalPath = path.join(ROOT, source.originalAsset);
@@ -110,9 +115,10 @@ test("licensed media assets are local, traceable, distinct, and placement-driven
   }
 
   for (const member of MEMBERS) {
-    if (!member.mediaId) continue;
+    assert.ok(member.mediaId, `${member.id} must have a reviewed member portrait`);
     assert.equal(MEDIA_BY_ID[member.mediaId]?.memberId, member.id);
     assert.equal(MEDIA_BY_ID[member.mediaId]?.status, "active");
+    assert.match(MEDIA_BY_ID[member.mediaId]?.modified, /補黑/);
   }
 
   const register = read("docs/MEDIA_REGISTER.md");

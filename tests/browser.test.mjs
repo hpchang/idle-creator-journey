@@ -213,7 +213,7 @@ test("real-browser load, resource, overflow, and responsive checks cover all req
         assert.ok(imageData.every((image) => image.src?.startsWith("assets/images/commons/") && image.alt && Number(image.width) > 0 && Number(image.height) > 0));
         assert.ok(imageData.every((image) => image.naturalWidth === Number(image.width) && image.naturalHeight === Number(image.height)), "declared image dimensions must match local assets");
         assert.equal(await page.locator(".member-card__media--fallback").count(), EXPECTED_MEMBER_FALLBACKS);
-        assert.equal(imageData.filter((image) => image.loading === "lazy").length, EXPECTED_MEDIA_COUNT - 1);
+        assert.equal(imageData.filter((image) => image.loading === "lazy").length, EXPECTED_MEDIA_COUNT - 2, "hero and first member portrait load eagerly");
         const renderedMedia = await page.locator("[data-media-id]").evaluateAll((figures) => figures.map((figure) => ({ id: figure.dataset.mediaId, photoId: figure.dataset.photoId })));
         assert.deepEqual(renderedMedia.map(({ id }) => id).sort(), EXPECTED_MEDIA_IDS);
         assert.equal(new Set(renderedMedia.map(({ photoId }) => photoId)).size, EXPECTED_MEDIA_COUNT, "each rendered slot must use a different original photo");

@@ -2,7 +2,7 @@ export const MEMBERS = [
   {
     id: "miyeon",
     name: "Miyeon",
-    mediaId: "miyeon-2025",
+    mediaId: "miyeon-amsterdam-2023",
     start: "她在 KBS 訪談中談到曾參加線上試鏡；第一次流程後沒有收到最終通知。",
     challenge: "沒有收到回覆時，她準備新的 demo，再次主動爭取機會。",
     ability: "重新整理自己的呈現方式，並主動讓別人再次看見。",
@@ -13,7 +13,7 @@ export const MEMBERS = [
   {
     id: "minnie",
     name: "Minnie",
-    mediaId: "minnie-2025",
+    mediaId: "minnie-amsterdam-2023",
     start: "她在泰國獲得赴韓訓練機會；受訪時表示，當時也曾考慮留在泰國繼續升學。",
     challenge: "母親鼓勵她冒險；初到韓國後，她還要面對語言與生活適應。",
     ability: "她五歲開始學鋼琴，後來把自幼接觸音樂的基礎帶進全新的語言與工作環境。",
@@ -24,7 +24,7 @@ export const MEMBERS = [
   {
     id: "soyeon",
     name: "Soyeon",
-    mediaId: "soyeon-2024",
+    mediaId: "soyeon-amsterdam-2023",
     start: "媒體回顧她曾經歷約 20–30 次試鏡失敗，後來把 rap 加入試鏡呈現。",
     challenge: "她參加《Produce 101》《Unpretty Rapstar 3》，先以個人歌手活動，再成為團體隊長。",
     ability: "調整讓別人看見能力的方式，並持續參與作品的詞曲與製作。",
@@ -35,7 +35,7 @@ export const MEMBERS = [
   {
     id: "yuqi",
     name: "Yuqi",
-    mediaId: "yuqi-2025",
+    mediaId: "yuqi-amsterdam-2023",
     start: "她出生於北京；媒體報導她在 2015 年參加 Cube 北京試鏡後赴韓成為練習生。",
     challenge: "她曾談到觀看 HyunA 舞台後產生 K-pop 志向，之後把興趣轉成跨國移動與長期訓練的選擇。",
     ability: "在跨文化環境中學習、表達，也持續參與部分歌曲創作。",
@@ -46,7 +46,7 @@ export const MEMBERS = [
   {
     id: "shuhua",
     name: "Shuhua",
-    mediaId: null,
+    mediaId: "shuhua-amsterdam-2023",
     start: "她是團體跨國組成中的台灣成員，也是 2018 年隨團出道的初始成員之一；關於更早經歷，公開資料相對有限。",
     challenge: "資料不足時，不用傳聞填滿空白；她後來也在官方節目中換到觀察新人的位置。",
     ability: "後來在官方節目中擔任一日 casting manager，從被選擇者的視角走向觀察新人。",

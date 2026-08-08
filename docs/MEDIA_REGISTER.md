@@ -1,17 +1,17 @@
 # i-dle 網站圖片授權登錄表
 
-最後核對：2026-08-07
+最後核對：2026-08-08
 
 本檔記錄網站圖片的著作權來源、授權審查、原始檔雜湊與修改方式。圖片 attribution 不等於取得肖像權、人格權、商標權或官方背書；本站仍為非官方粉絲教育專案。
 
 ## 使用原則
 
-- 只使用 Wikimedia Commons 檔案頁明確標示 CC BY／CC BY-SA／CC0，且可找到 LicenseReview、YouTubeReview 或 FlickreviewR passed 證據的素材。
+- 只使用 Wikimedia Commons 檔案頁明確標示 CC BY／CC BY-SA／CC0，並可核對授權來源的素材。第三方來源需有 LicenseReview、YouTubeReview 或 FlickreviewR passed；攝影者自行上傳的作品則需同時具備 `source={{own}}`、作者身分與 `{{self|...}}` 授權聲明，並明確註記沒有獨立 LicenseReview。
 - 網站只載入本地衍生檔，不在 runtime hotlink Commons 原圖。
 - 同一原圖的不同裁切只算一個 `photoId`，不以 variants 虛增圖片數量。
 - M01 保留歷史 provenance，但已退出 active production。
-- Yuqi 圖片依檔案頁同時保留 author 欄與 CC attribution；Shuhua 因未找到同時通過授權與畫面 gate 的近期單人照，使用姓名卡 fallback。
-- 第 03 章成員頭像為同一組已登錄衍生檔的 CSS 圓形裁切與縮放呈現，不產生新的圖片檔，原檔與衍生檔雜湊維持不變。
+- M05–M08 舊單人照保留 provenance，但第 03 章已改用 M09–M13 同一場 Amsterdam concert 舞台照。
+- 第 03 章五張成員照來自同一攝影者與同一場演唱會；衍生檔保留原圖比例、縮小後置中補黑為 640×800，再以一致的 CSS 圓形裁切、暗角與色彩處理呈現，不去背、不合成人物。
 - 第 13 章圖片授權與文字來源共用同一組可信度折疊清單，圖片授權為其中一組；共用權利範圍只在該組開頭陳述一次，每筆來源的核對紀錄、修改說明、原始檔連結與原檔雜湊置於可展開的「核對紀錄與技術資料」，內容未刪減。
 - 第 08 章歌曲卡面為本站以 CSS／inline SVG 繪製的原創圖形，不重製官方專輯封面或任何官方視覺；卡面下方固定標示此點。
 
@@ -61,9 +61,81 @@
 - **網站衍生檔：** `idle-tacoma-2024.jpg`，1400×788，等比例縮小，保留原始黑白畫面。
 - **衍生檔 SHA-256：** `e7aca6785b8a219a7d70fc67821650717cbdb443b595ca07c78a18299a11e646`
 
-### M05｜Miyeon 2025
+### M09｜2023 Amsterdam concert Miyeon 094
 
 - **用途：** Miyeon 成員卡
+- **Commons 檔案頁：** https://commons.wikimedia.org/wiki/File:20230911_%28G%29I-dle_Amsterdam_concert_094_Miyeon.jpg
+- **原始檔：** https://upload.wikimedia.org/wikipedia/commons/2/2e/20230911_%28G%29I-dle_Amsterdam_concert_094_Miyeon.jpg
+- **作者：** Robbie Klinkenberg
+- **拍攝日期：** 2023-09-11
+- **原始尺寸：** 2340 × 3252 JPEG
+- **原始檔 SHA-256：** `dd493ef21cd7fbfc0ee3f654ae1da3670a98263274f2c24a4c8670a29fa59982`
+- **授權：** CC BY-SA 4.0 — https://creativecommons.org/licenses/by-sa/4.0/
+- **審查：** Commons 原始碼記錄 `source={{own}}`、`author=Robbie Klinkenberg` 與 `{{self|cc-by-sa-4.0}}`；屬攝影者自行上傳授權，沒有獨立 LicenseReview。本站於 2026-08-08 核對。
+- **網站衍生檔：** `miyeon-amsterdam-2023.jpg`，640×800；原圖等比例縮小至高 800px，置中補黑，不修改人物。
+- **衍生檔 SHA-256：** `3886caa097744674b44e0458a842830c85d73f057317df9c7c374f3adfcd5873`
+
+### M10｜2023 Amsterdam concert Minnie 070
+
+- **用途：** Minnie 成員卡
+- **Commons 檔案頁：** https://commons.wikimedia.org/wiki/File:20230911_%28G%29I-dle_Amsterdam_concert_070_Minnie.jpg
+- **原始檔：** https://upload.wikimedia.org/wikipedia/commons/b/bd/20230911_%28G%29I-dle_Amsterdam_concert_070_Minnie.jpg
+- **作者：** Robbie Klinkenberg
+- **拍攝日期：** 2023-09-11
+- **原始尺寸：** 1619 × 3031 JPEG
+- **原始檔 SHA-256：** `9a8ab073873efc734d6c6d784ebf50ef39e23aa9c416eb0d7380bf1a945412b4`
+- **授權：** CC BY-SA 4.0 — https://creativecommons.org/licenses/by-sa/4.0/
+- **審查：** Commons 原始碼記錄 `source={{own}}`、`author=Robbie Klinkenberg` 與 `{{self|cc-by-sa-4.0}}`；屬攝影者自行上傳授權，沒有獨立 LicenseReview。本站於 2026-08-08 核對。
+- **網站衍生檔：** `minnie-amsterdam-2023.jpg`，640×800；原圖等比例縮小至高 800px，置中補黑，不修改人物。
+- **衍生檔 SHA-256：** `c812b315b2976a7d25d05a1b6c4ef634a9e5ddaf5cabe275a64f767c6bb9aafb`
+
+### M11｜2023 Amsterdam concert Soyeon 065
+
+- **用途：** Soyeon 成員卡
+- **Commons 檔案頁：** https://commons.wikimedia.org/wiki/File:20230911_%28G%29I-dle_Amsterdam_concert_065_Soyeon.jpg
+- **原始檔：** https://upload.wikimedia.org/wikipedia/commons/2/22/20230911_%28G%29I-dle_Amsterdam_concert_065_Soyeon.jpg
+- **作者：** Robbie Klinkenberg
+- **拍攝日期：** 2023-09-11
+- **原始尺寸：** 1277 × 2665 JPEG
+- **原始檔 SHA-256：** `faccbab082aab0a8bfcea61cccc3b7b55cb3276e64e242fee0366baed66f818a`
+- **授權：** CC BY-SA 4.0 — https://creativecommons.org/licenses/by-sa/4.0/
+- **審查：** Commons 原始碼記錄 `source={{own}}`、`author=Robbie Klinkenberg` 與 `{{self|cc-by-sa-4.0}}`；屬攝影者自行上傳授權，沒有獨立 LicenseReview。本站於 2026-08-08 核對。
+- **網站衍生檔：** `soyeon-amsterdam-2023.jpg`，640×800；原圖等比例縮小至高 800px，置中補黑，不修改人物。
+- **衍生檔 SHA-256：** `b24d3d309acad0fe5339edc0a18a4a23b0b27e18c82e80003fd218a485c18eb4`
+
+### M12｜2023 Amsterdam concert Yuqi 058
+
+- **用途：** Yuqi 成員卡
+- **Commons 檔案頁：** https://commons.wikimedia.org/wiki/File:20230911_%28G%29I-dle_Amsterdam_concert_058_Yuqi.jpg
+- **原始檔：** https://upload.wikimedia.org/wikipedia/commons/4/40/20230911_%28G%29I-dle_Amsterdam_concert_058_Yuqi.jpg
+- **作者：** Robbie Klinkenberg
+- **拍攝日期：** 2023-09-11
+- **原始尺寸：** 2874 × 4000 JPEG
+- **原始檔 SHA-256：** `8ecbe32305ac41d81266a62f45820a498bd59bda444003f25b54294d0f66f94c`
+- **授權：** CC BY-SA 4.0 — https://creativecommons.org/licenses/by-sa/4.0/
+- **審查：** Commons 原始碼記錄 `source={{own}}`、`author=Robbie Klinkenberg` 與 `{{self|cc-by-sa-4.0}}`；屬攝影者自行上傳授權，沒有獨立 LicenseReview。本站於 2026-08-08 核對。
+- **網站衍生檔：** `yuqi-amsterdam-2023.jpg`，640×800；原圖等比例縮小至高 800px，置中補黑，不修改人物。
+- **衍生檔 SHA-256：** `ee73ec84992c5a130a3c63f93191ab4df59f4fb8857842760182498f736f1c98`
+
+### M13｜2023 Amsterdam concert Shuhua 051
+
+- **用途：** Shuhua 成員卡
+- **Commons 檔案頁：** https://commons.wikimedia.org/wiki/File:20230911_%28G%29I-dle_Amsterdam_concert_051_Shuhua.jpg
+- **原始檔：** https://upload.wikimedia.org/wikipedia/commons/b/b3/20230911_%28G%29I-dle_Amsterdam_concert_051_Shuhua.jpg
+- **作者：** Robbie Klinkenberg
+- **拍攝日期：** 2023-09-11
+- **原始尺寸：** 1459 × 1844 JPEG
+- **原始檔 SHA-256：** `da76fdd6f4a5a5cd9c13e02ef38101c22a4bad20f757a537a01c1654c95866ef`
+- **授權：** CC BY-SA 4.0 — https://creativecommons.org/licenses/by-sa/4.0/
+- **審查：** Commons 原始碼記錄 `source={{own}}`、`author=Robbie Klinkenberg` 與 `{{self|cc-by-sa-4.0}}`；屬攝影者自行上傳授權，沒有獨立 LicenseReview。本站於 2026-08-08 核對。
+- **網站衍生檔：** `shuhua-amsterdam-2023.jpg`，640×800；原圖等比例縮小至高 800px，置中補黑，不修改人物。
+- **衍生檔 SHA-256：** `b754eaadc35e4e703012689104db895d5d5f0521a29cd4bbb0d0d26115190545`
+
+## Retired provenance
+
+### M05｜Miyeon 2025（已退役）
+
+- **用途：** 第 03 章上一版 Miyeon 成員卡；目前不在 active DOM 使用
 - **Commons 檔案頁：** https://commons.wikimedia.org/wiki/File:Miyeon_in_November_2025.png
 - **原始檔：** https://upload.wikimedia.org/wikipedia/commons/d/dc/Miyeon_in_November_2025.png
 - **作者：** TV10（_TV10）
@@ -75,9 +147,9 @@
 - **網站衍生檔：** `miyeon-2025.jpg`，480×600；原圖裁切為 511×639 後縮小並轉 JPEG。
 - **衍生檔 SHA-256：** `bb45e151d59384a73bff88c728f0ba7bfd00b591405504033a9118ae68385408`
 
-### M06｜Minnie 2025 Miu Miu photo call
+### M06｜Minnie 2025 Miu Miu photo call（已退役）
 
-- **用途：** Minnie 成員卡
+- **用途：** 第 03 章上一版 Minnie 成員卡；目前不在 active DOM 使用
 - **Commons 檔案頁：** https://commons.wikimedia.org/wiki/File:20250620_I-dle_MINNIE_MiuMiu_PhotoCall.jpg
 - **原始檔：** https://upload.wikimedia.org/wikipedia/commons/c/c6/20250620_I-dle_MINNIE_MiuMiu_PhotoCall.jpg
 - **作者：** K-POPIT 케이팝잇
@@ -90,9 +162,9 @@
 - **網站衍生檔：** `minnie-2025.jpg`，640×800；原圖裁切為 1620×2025 後縮小。
 - **衍生檔 SHA-256：** `c4de7de60f44b5e2e1ffbbe1c35670649ade3846e19f6ccbfdb9bd9e543e901b`
 
-### M07｜Soyeon 2024 photo call
+### M07｜Soyeon 2024 photo call（已退役）
 
-- **用途：** Soyeon 成員卡
+- **用途：** 第 03 章上一版 Soyeon 成員卡；目前不在 active DOM 使用
 - **Commons 檔案頁：** https://commons.wikimedia.org/wiki/File:Jeon_Soyeon_photo_call_2024_02.jpg
 - **原始檔：** https://upload.wikimedia.org/wikipedia/commons/5/5d/Jeon_Soyeon_photo_call_2024_02.jpg
 - **作者：** K-POPIT 케이팝잇
@@ -104,9 +176,9 @@
 - **網站衍生檔：** `soyeon-2024.jpg`，640×800；水平裁切為 1365×1706 後縮小。
 - **衍生檔 SHA-256：** `a3064584e1106cfeaa3323449137adef0c8ee79aed33f2a0a89c771e524fa9f4`
 
-### M08｜Yuqi 2025-03-06 airport departure
+### M08｜Yuqi 2025-03-06 airport departure（已退役）
 
-- **用途：** Yuqi 成員卡
+- **用途：** 第 03 章上一版 Yuqi 成員卡；目前不在 active DOM 使用
 - **Commons 檔案頁：** https://commons.wikimedia.org/wiki/File:%28G%29I-DLE_YUQI_Airport_Departure_on_20250306_01.png
 - **原始檔：** https://upload.wikimedia.org/wikipedia/commons/4/4d/%28G%29I-DLE_YUQI_Airport_Departure_on_20250306_01.png
 - **作者欄：** TV10（_TV10）
@@ -120,8 +192,6 @@
 - **網站衍生檔：** `yuqi-2025.jpg`，640×800；等比例縮小並由 PNG 轉 JPEG，未裁切。
 - **衍生檔 SHA-256：** `6830b2fa6240a9c5926c9905d213ceaca8a012943e91d1ebdfda2df0005663c9`
 
-## Retired provenance
-
 ### M01｜2025 SBS Radio 團體現場圖（已退役）
 
 - **狀態：** 原始檔與舊衍生檔保留供 provenance／hash 驗證；renderer 不再載入。
@@ -134,4 +204,4 @@
 - **授權：** CC BY 3.0 — https://creativecommons.org/licenses/by/3.0/
 - **退役原因：** Hero 與五張成員卡都來自同一畫面裁切，造成重複、年代與章節語境不合。不是因授權失效。
 
-所有 active 與 retired 衍生檔均只做裁切、縮放與格式轉換，未合成人物或改變人物身份。
+所有 active 與 retired 衍生檔均只做裁切、縮放、補黑與格式轉換，未去背、合成人物或改變人物身份。
