@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">認識 i-dle 青少年互動網站預覽圖</title>
+  <desc id="desc">暖米白紙張、深紫舞台線條與五個抽象圓點構成的非官方預覽圖。</desc>
+  <rect width="1200" height="630" fill="#f2eadc"/>
+  <path d="M0 470 C230 390 370 560 610 460 S970 340 1200 430 V630 H0Z" fill="#201b22"/>
+  <path d="M60 70 H1140 V410 H60Z" fill="none" stroke="#5d263d" stroke-width="6"/>
+  <g fill="#7c4568">
+    <circle cx="250" cy="180" r="22"/><circle cx="420" cy="135" r="22"/><circle cx="600" cy="180" r="22"/><circle cx="780" cy="135" r="22"/><circle cx="950" cy="180" r="22"/>
+  </g>
+  <text x="100" y="300" font-family="system-ui, sans-serif" font-weight="800" font-size="72" fill="#201b22">認識 i-dle</text>
+  <text x="100" y="370" font-family="system-ui, sans-serif" font-size="34" fill="#5d263d">五個女孩如何從練習生變成創作者</text>
+  <text x="100" y="565" font-family="system-ui, sans-serif" font-size="24" fill="#f6f0e5">非官方青少年互動教育專案</text>
+</svg>

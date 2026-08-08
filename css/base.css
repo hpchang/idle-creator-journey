@@ -1,0 +1,249 @@
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 320px;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: 100%;
+  line-height: 1.5;
+  overflow-x: clip;
+  scroll-behavior: smooth;
+}
+
+body {
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  overflow-x: clip;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+img,
+svg,
+video {
+  display: block;
+  max-width: 100%;
+}
+
+button,
+input,
+textarea,
+select {
+  color: inherit;
+  font: inherit;
+}
+
+button,
+input[type="button"],
+input[type="submit"],
+input[type="reset"] {
+  cursor: pointer;
+}
+
+button:disabled,
+input:disabled {
+  cursor: not-allowed;
+}
+
+h1,
+h2,
+h3,
+p,
+blockquote,
+dl,
+dd,
+ol,
+ul {
+  margin-block: 0;
+}
+
+h1,
+h2,
+h3 {
+  color: var(--color-ink);
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: var(--leading-tight);
+  text-wrap: balance;
+}
+
+h1 {
+  font-size: var(--text-hero);
+  max-width: 11ch;
+}
+
+h2 {
+  font-size: var(--text-2xl);
+}
+
+h3 {
+  font-size: var(--text-xl);
+}
+
+p,
+li,
+dd {
+  max-width: var(--max-copy);
+  line-height: var(--leading-copy);
+}
+
+p + p,
+p + ul,
+p + ol,
+ul + p,
+ol + p {
+  margin-top: var(--space-4);
+}
+
+a {
+  color: var(--color-plum);
+  text-decoration-thickness: 0.1em;
+  text-underline-offset: 0.18em;
+}
+
+a:hover {
+  color: var(--color-brick);
+}
+
+:where(a, button, input, textarea, select, summary):focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+  box-shadow: var(--ring);
+}
+
+:where(.section--dark, .section--game, .site-footer) :where(a, button, input, textarea, select, summary):focus-visible {
+  outline-color: var(--color-focus-dark);
+  box-shadow: 0 0 0 3px rgb(255 211 106 / 0.3);
+}
+
+::selection {
+  background: var(--color-plum);
+  color: var(--color-dark-text);
+}
+
+fieldset {
+  min-inline-size: 0;
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+
+legend {
+  padding: 0;
+}
+
+textarea {
+  resize: vertical;
+}
+
+summary {
+  cursor: pointer;
+}
+
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.skip-link {
+  position: fixed;
+  z-index: 100;
+  top: var(--space-3);
+  left: var(--space-3);
+  transform: translateY(-160%);
+  padding: 0.7rem 1rem;
+  border-radius: var(--radius-sm);
+  background: var(--color-dark);
+  color: var(--color-dark-text);
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform 160ms var(--ease-standard);
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
+.noscript {
+  max-width: var(--max-copy);
+  margin: var(--space-4) auto;
+  padding: var(--space-4);
+  border: 2px solid var(--color-danger);
+  background: var(--color-brick-soft);
+  color: var(--color-ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media print {
+  :root {
+    --color-paper: #fff;
+    --color-paper-raised: #fff;
+    --color-ink: #000;
+    --color-ink-soft: #222;
+    --color-ink-muted: #444;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+    color: #000 !important;
+    overflow: visible;
+  }
+
+  .site-header,
+  .reading-progress,
+  .hero__actions,
+  .toc-toggle,
+  .game-app,
+  .skip-link {
+    display: none !important;
+  }
+
+  .stage-section,
+  .source-card,
+  .member-card,
+  .credit-card,
+  .fact-card {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  a {
+    color: #000;
+    text-decoration: underline;
+  }
+
+  a[href^="http"]::after {
+    content: " (" attr(href) ")";
+    font-size: 0.8em;
+    overflow-wrap: anywhere;
+  }
+}
