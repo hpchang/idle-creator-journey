@@ -85,7 +85,9 @@
 ## 技術架構與部署
 
 - 使用語意 HTML、原生 CSS 與 Vanilla JavaScript ES modules；無 production build 步驟。
-- 無後端、登入、資料庫或 runtime framework。
+- 無應用程式後端、登入、CMS 或 runtime framework；網站本體維持靜態部署。
+- 唯一外部資料服務是 `src/counter.mjs` 使用的共用 Supabase 瀏覽計數 RPC；publishable key 可公開，安全性依賴資料庫 RLS、RPC 權限與 slug 白名單，不得加入 service-role key 或資料庫密碼。
+- 計數器失敗必須靜默，不可阻擋主要內容與互動。
 - 事實內容、來源、歌曲 credit 與遊戲規則集中在 `src/data/`。
 - 遊戲狀態只存在瀏覽器，重新整理可重來。
 - 不加入不必要的分析追蹤或第三方 SDK。

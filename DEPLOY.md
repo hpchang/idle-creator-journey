@@ -7,7 +7,9 @@
 
 ## 部署設定
 
-本網站是可直接提供的靜態 HTML、CSS 與 Vanilla JavaScript ES modules，沒有 production build 步驟。
+本網站是可直接提供的靜態 HTML、CSS 與 Vanilla JavaScript ES modules，沒有 production build 步驟。`src/counter.mjs` 會從瀏覽器呼叫共用 Supabase RPC 顯示匿名瀏覽次數，但它不是 GitHub Pages 的部署依賴；請求失敗時網站仍可完整使用。
+
+計數器只使用 publishable key，資料表由 RLS 隔離，前端只能呼叫已授權且含 slug 白名單的 `read_hits`／`bump_hits` RPC。不得把 service-role key 或資料庫密碼加入 repository。
 
 GitHub Pages 設定：
 
