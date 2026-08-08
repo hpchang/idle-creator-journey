@@ -11,6 +11,7 @@ import { SOURCE_LIST, SOURCE_TIERS } from "../src/data/sources.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const BASE_URL = process.env.IDLE_BASE_URL ?? "http://127.0.0.1:4173";
+const BASE_PATH = new URL(BASE_URL).pathname.replace(/\/$/, "");
 const VIEWPORTS = [360, 390, 768, 1280];
 const CSS_ROUTES = ["/css/tokens.css", "/css/base.css", "/css/layout.css", "/css/components.css", "/css/game.css"];
 const EXPECTED_GAME_METRICS = ["clarity", "music", "reach", "health", "brand"];
@@ -218,7 +219,7 @@ test("real-browser load, resource, overflow, and responsive checks cover all req
         assert.equal(new Set(renderedMedia.map(({ photoId }) => photoId)).size, EXPECTED_MEDIA_COUNT, "each rendered slot must use a different original photo");
         assert.equal(renderedMedia.some(({ id }) => id.startsWith("idle-2025-")), false, "retired SBS crops must not render");
         const statuses = new Map(page.__responses.map(({ url, status }) => [new URL(url).pathname, status]));
-        for (const route of CSS_ROUTES) assert.equal(statuses.get(route), 200, `${route} must load with HTTP 200`);
+        for (const route of CSS_ROUTES) assert.equal(statuses.get(`${BASE_PATH}${route}`), 200, `${route} must load with HTTP 200`);
         const badLocalResponses = page.__responses.filter(({ url, status }) => status >= 400 && new URL(url).origin === new URL(BASE_URL).origin);
         assert.deepEqual(badLocalResponses, [], `local resources must not return HTTP errors at ${width}px`);
         assert.deepEqual(page.__consoleErrors ?? [], [], `console errors at ${width}px`);
