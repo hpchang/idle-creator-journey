@@ -2,6 +2,12 @@
 
 本資料夾用於製作一個以青少年為主要對象的 i-dle（原名 (G)I-DLE）互動式長篇網站。
 
+## 線上網站
+
+- 正式網站：<https://www.hpchang.com/idle-creator-journey/>
+- GitHub repository：<https://github.com/hpchang/idle-creator-journey>
+- 部署與更新流程：[`DEPLOY.md`](./DEPLOY.md)
+
 ## 開始前必讀
 
 1. [`CLAUDE.md`](./CLAUDE.md) — 實作代理必須遵守的專案規則與已確認決策

@@ -82,15 +82,19 @@
 - 所有互動可用鍵盤操作，具清楚 focus 狀態、ARIA label 與足夠對比。
 - 圖片必須有合法授權。沒有授權時先使用明確 placeholder，不可隨意抓取新聞社或官方照片再發布。
 
-## 建議技術預設
+## 技術架構與部署
 
-資料夾目前為空。若使用者未指定框架：
-
-- 優先靜態 HTML/CSS/JavaScript，或選擇最小型、可靜態輸出的前端工具。
-- 無後端、無登入、無資料庫。
-- 把事實內容與來源抽成結構化資料，避免散落在元件中。
+- 使用語意 HTML、原生 CSS 與 Vanilla JavaScript ES modules；無 production build 步驟。
+- 無後端、登入、資料庫或 runtime framework。
+- 事實內容、來源、歌曲 credit 與遊戲規則集中在 `src/data/`。
 - 遊戲狀態只存在瀏覽器，重新整理可重來。
 - 不加入不必要的分析追蹤或第三方 SDK。
+- GitHub repository：`https://github.com/hpchang/idle-creator-journey`。
+- 正式網站：`https://www.hpchang.com/idle-creator-journey/`。
+- GitHub Pages 使用 `main` 分支、`/ (root)` 的 classic/legacy branch deployment。
+- 不建立 `gh-pages`、project-level `CNAME` 或 repository-owned Pages Actions workflow。
+- 站內資源維持相對路徑，確保可在 `/idle-creator-journey/` 子路徑運作。
+- `npm run serve` 只供本機預覽；部署與驗證流程見 `DEPLOY.md`。
 
 ## 完成定義
 
