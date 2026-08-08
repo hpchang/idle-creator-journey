@@ -11,6 +11,7 @@ import {
 } from "./data/site.mjs";
 import { SOURCE_LIST, groupSourcesByTier } from "./data/sources.mjs";
 import { initGame } from "./game/controller.mjs";
+import { initCounter } from "./counter.mjs";
 import {
   escapeHtml,
   renderFact,
@@ -494,6 +495,7 @@ function initialize() {
   setupChapterObserver();
   setupReadingProgress();
   setupSourceFocus();
+  initCounter("idle-creator-journey");
 
   const status = document.createElement("p");
   status.className = "sr-only";
