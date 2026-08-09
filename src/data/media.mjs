@@ -287,6 +287,32 @@ export const MEDIA_SOURCES = [
     status: "active",
     rightsNotice: RIGHTS_NOTICE,
   },
+  {
+    id: "M14",
+    title: "220814 (G)I-DLE at Just Me ( )I-dle World Tour in Monterrey 01",
+    author: "PinkMagicCloud",
+    filePageUrl:
+      "https://commons.wikimedia.org/wiki/File:220814_(G)I-DLE_(%EC%97%AC%EC%9E%90)%EC%95%84%EC%9D%B4%EB%93%A4_at_Just_Me_(_)I-dle_World_Tour_in_Monterrey_01.jpg",
+    originalUrl:
+      "https://upload.wikimedia.org/wikipedia/commons/d/de/220814_%28G%29I-DLE_%28%EC%97%AC%EC%9E%90%29%EC%95%84%EC%9D%B4%EB%93%A4_at_Just_Me_%28_%29I-dle_World_Tour_in_Monterrey_01.jpg",
+    originalAsset: "assets/images/commons/originals/20220814-idle-monterrey-01.jpg",
+    originalWidth: 2048,
+    originalHeight: 1536,
+    originalSha256: "9d8bdcce623793d8ac5b51e0492f7508297131cfbe387a901ff1af2a9a9a58fd",
+    capturedAt: "2022-08-14",
+    accessedAt: "2026-08-09",
+    licenseName: "CC BY-SA 4.0",
+    licenseUrl: "https://creativecommons.org/licenses/by-sa/4.0/",
+    sourceName: "Wikimedia Commons",
+    creditText: "PinkMagicCloud，CC BY-SA 4.0，via Wikimedia Commons",
+    reviewEvidence:
+      "Commons 檔案頁授權欄為 {{cc-by-sa-4.0|PinkMagicCloud}}，但 {{Licensereview}} 尚未有審查員簽核，檔案仍在 Category:License review needed。本站於 2026-08-09 自行核對檔案頁 permission 欄所指的 Wayback 存檔（2022-08-18），作者本人聲明該串十二張照片全部以 CC BY-SA 4.0 釋出。",
+    reviewedAt: "2026-08-09",
+    reviewStatus: "approved",
+    status: "active",
+    usageNote: "此來源不在頁面內文載入，只用於社群分享預覽圖（Open Graph）。分享圖為 CC BY-SA 4.0 衍生作品，同樣以 CC BY-SA 4.0 釋出。",
+    rightsNotice: RIGHTS_NOTICE,
+  },
 ];
 
 export const MEDIA_SOURCE_BY_ID = Object.fromEntries(MEDIA_SOURCES.map((source) => [source.id, source]));

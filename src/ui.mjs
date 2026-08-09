@@ -64,7 +64,13 @@ export function renderMediaLicenseCard(source, media = []) {
         <div><dt>授權</dt><dd><a href="${escapeHtml(source.licenseUrl)}" target="_blank" rel="license noopener noreferrer">${escapeHtml(source.licenseName)}</a></dd></div>
         <div><dt>檔案頁</dt><dd><a href="${escapeHtml(source.filePageUrl)}" target="_blank" rel="noopener noreferrer">Wikimedia Commons<span aria-hidden="true"> ↗</span></a></dd></div>
       </dl>
-      <p class="media-license-card__usage">${activeDerivatives.length ? `本站使用 ${activeDerivatives.length} 個本地衍生檔。` : "此來源目前不在公開版面載入。"}</p>
+      <p class="media-license-card__usage">${
+        source.usageNote
+          ? escapeHtml(source.usageNote)
+          : activeDerivatives.length
+            ? `本站使用 ${activeDerivatives.length} 個本地衍生檔。`
+            : "此來源目前不在公開版面載入。"
+      }</p>
       <details class="media-license-card__audit">
         <summary>核對紀錄與技術資料<span class="sr-only">（${escapeHtml(source.id)}）</span></summary>
         <dl>

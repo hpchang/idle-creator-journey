@@ -2,8 +2,9 @@
 
 網站使用兩類視覺素材：
 
-1. 自行撰寫的 CSS 圖形與 `og-placeholder.svg`。
+1. 自行撰寫的 CSS 圖形與原創站標 `favicon.svg`、`apple-touch-icon.png`。
 2. `images/commons/` 中由 Wikimedia Commons 取得並自行託管的 CC 授權人物圖片。
+3. `og-idle-creator-journey.jpg`：社群分享預覽圖，由 M14 原圖裁切並疊加標題文字而成；依 ShareAlike 條款同樣以 CC BY-SA 4.0 釋出。
 
 ## 目錄
 

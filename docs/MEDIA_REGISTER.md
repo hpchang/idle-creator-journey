@@ -1,12 +1,12 @@
 # i-dle 網站圖片授權登錄表
 
-最後核對：2026-08-08
+最後核對：2026-08-09
 
 本檔記錄網站圖片的著作權來源、授權審查、原始檔雜湊與修改方式。圖片 attribution 不等於取得肖像權、人格權、商標權或官方背書；本站仍為非官方粉絲教育專案。
 
 ## 使用原則
 
-- 只使用 Wikimedia Commons 檔案頁明確標示 CC BY／CC BY-SA／CC0，並可核對授權來源的素材。第三方來源需有 LicenseReview、YouTubeReview 或 FlickreviewR passed；攝影者自行上傳的作品則需同時具備 `source={{own}}`、作者身分與 `{{self|...}}` 授權聲明，並明確註記沒有獨立 LicenseReview。
+- 只使用 Wikimedia Commons 檔案頁明確標示 CC BY／CC BY-SA／CC0，並可核對授權來源的素材。第三方來源需有 LicenseReview、YouTubeReview 或 FlickreviewR passed；攝影者自行上傳的作品則需同時具備 `source={{own}}`、作者身分與 `{{self|...}}` 授權聲明，並明確註記沒有獨立 LicenseReview。唯一例外是 M14（社群分享預覽圖）：Commons 審查尚未完成，改由本站自行核對作者原始授權聲明的存檔，並在登錄表中明確標示此落差與更換條件。
 - 網站只載入本地衍生檔，不在 runtime hotlink Commons 原圖。
 - 同一原圖的不同裁切只算一個 `photoId`，不以 variants 虛增圖片數量。
 - M01 保留歷史 provenance，但已退出 active production。
@@ -130,6 +130,26 @@
 - **審查：** Commons 原始碼記錄 `source={{own}}`、`author=Robbie Klinkenberg` 與 `{{self|cc-by-sa-4.0}}`；屬攝影者自行上傳授權，沒有獨立 LicenseReview。本站於 2026-08-08 核對。
 - **網站衍生檔：** `shuhua-amsterdam-2023.jpg`，640×800；原圖等比例縮小至高 800px，置中補黑，不修改人物。
 - **衍生檔 SHA-256：** `b754eaadc35e4e703012689104db895d5d5f0521a29cd4bbb0d0d26115190545`
+
+### M14｜2022 Just Me ( )I-dle 世界巡演蒙特雷場
+
+- **用途：** 社群分享預覽圖（Open Graph／Twitter card）；不在頁面內文載入
+- **Commons 檔案頁：** https://commons.wikimedia.org/wiki/File:220814_(G)I-DLE_(%EC%97%AC%EC%9E%90)%EC%95%84%EC%9D%B4%EB%93%A4_at_Just_Me_(_)I-dle_World_Tour_in_Monterrey_01.jpg
+- **原始檔：** https://upload.wikimedia.org/wikipedia/commons/d/de/220814_%28G%29I-DLE_%28%EC%97%AC%EC%9E%90%29%EC%95%84%EC%9D%B4%EB%93%A4_at_Just_Me_%28_%29I-dle_World_Tour_in_Monterrey_01.jpg
+- **作者：** PinkMagicCloud
+- **拍攝日期：** 2022-08-14
+- **原始尺寸：** 2048 × 1536 JPEG
+- **原始檔 SHA-256：** `9d8bdcce623793d8ac5b51e0492f7508297131cfbe387a901ff1af2a9a9a58fd`
+- **授權：** CC BY-SA 4.0 — https://creativecommons.org/licenses/by-sa/4.0/
+- **審查：** ⚠️ 與其他第三方來源不同，本檔尚未通過 Commons 授權審查。檔案頁授權欄為 `{{cc-by-sa-4.0|PinkMagicCloud}}`，`{{Licensereview}}` 沒有審查員簽核，檔案仍列在 `Category:License review needed`。本站於 2026-08-09 自行核對檔案頁 `permission` 欄所指的 Wayback 存檔（2022-08-18），作者本人在該推文串聲明十二張照片全部以 CC BY-SA 4.0 釋出。若日後 Commons 審查未通過或作者撤回聲明，必須立即更換分享圖。
+- **語境限制：** 只標示為 2022 年 Just Me ( )I-dle 世界巡演蒙特雷場；背板為當時團名 (G)I-DLE，不可寫成現行 i-dle 時期或官方宣傳素材。
+- **網站衍生檔：** `assets/og-idle-creator-journey.jpg`，1200×630 JPEG；原圖以 `object-fit: cover`、`object-position: center 88%` 裁切至 1200×630，加上由上至下的深色漸層遮罩、網站標題文字與攝影者標示；未去背、未合成人物、未改變人物身份。
+- **衍生檔 SHA-256：** `ea8f58789836173c1b179bfddde7ca5f4e2959df9484e902de62cf4ae5bf4c55`
+- **衍生檔授權：** 依 CC BY-SA 4.0 的 ShareAlike 條款，本分享圖同樣以 CC BY-SA 4.0 釋出；圖片右下角固定標示「照片：PinkMagicCloud・CC BY-SA 4.0・via Wikimedia Commons」。
+
+## 自製視覺素材
+
+`assets/favicon.svg` 與 `assets/apple-touch-icon.png` 為本站原創圖形（深紫底、米白小寫 `i` 與磚紅連字號），呼應 2025 年改名為小寫 `i-dle`。不使用任何官方 logo、字體或商標。
 
 ## Retired provenance
 
