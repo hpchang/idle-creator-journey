@@ -12,7 +12,7 @@ import { SOURCE_LIST, SOURCE_TIERS } from "../src/data/sources.mjs";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const BASE_URL = process.env.IDLE_BASE_URL ?? "http://127.0.0.1:4173";
 const BASE_PATH = new URL(BASE_URL).pathname.replace(/\/$/, "");
-const VIEWPORTS = [360, 390, 768, 1280];
+const VIEWPORTS = [360, 390, 768, 1024, 1280, 1440];
 const CSS_ROUTES = ["/css/tokens.css", "/css/base.css", "/css/layout.css", "/css/components.css", "/css/game.css"];
 const EXPECTED_GAME_METRICS = ["clarity", "music", "reach", "health", "brand"];
 const EXPECTED_MEDIA_COUNT = ACTIVE_MEDIA.length;
@@ -159,8 +159,11 @@ async function runKeyboardRoute(page, { seed, themeIndex, productionIndex, event
   await page.locator('[data-action="next-step"]').focus();
   await page.locator('[data-action="next-step"]').press("Enter");
   await page.waitForSelector(".result-card");
+  assert.equal(await page.evaluate(() => document.activeElement?.hasAttribute("data-result-panel")), true, "result panel must receive focus");
   const resultText = await page.locator(".result-card").innerText();
-  assert.match(resultText, /你的企劃人格/);
+  assert.match(resultText, /企劃完成：你做了 5 個決定。/);
+  assert.match(resultText, /這次的決策傾向/);
+  assert.match(resultText, /這不是固定人格或能力測驗/);
   assert.doesNotMatch(resultText, /(?:銷量|榜單|排名|收入|薪資|美元|韓元)/);
 }
 
@@ -184,7 +187,7 @@ function skipReason() {
   return false;
 }
 
-test("real-browser load, resource, overflow, and responsive checks cover all required viewports", { timeout: 120_000 }, async (t) => {
+test("real-browser load, resource, overflow, and responsive checks cover all required viewports", { timeout: 180_000 }, async (t) => {
   if (skipReason()) return t.skip(skipReason());
   for (const width of VIEWPORTS) {
     await t.test(`viewport ${width}px`, async () => {
@@ -238,7 +241,7 @@ test("real-browser load, resource, overflow, and responsive checks cover all req
   }
 });
 
-test("axe-core scans each required viewport for WCAG regressions", { timeout: 120_000 }, async (t) => {
+test("axe-core scans each required viewport for WCAG regressions", { timeout: 180_000 }, async (t) => {
   if (skipReason()) return t.skip(skipReason());
   for (const width of VIEWPORTS) {
     await t.test(`axe viewport ${width}px`, async () => {
@@ -255,7 +258,7 @@ test("axe-core scans each required viewport for WCAG regressions", { timeout: 12
   }
 });
 
-test("keyboard-only navigation and game flow preserve focus, source links, and copy fallback", { timeout: 120_000 }, async (t) => {
+test("keyboard-only navigation and game flow preserve focus, source links, and copy fallback", { timeout: 180_000 }, async (t) => {
   if (skipReason()) return t.skip(skipReason());
   const { context, page } = await newPage({ viewport: 390, clipboardDenied: true });
   try {
@@ -294,15 +297,22 @@ test("keyboard-only navigation and game flow preserve focus, source links, and c
     assert.equal(await page.locator('[data-action="next-step"]').isDisabled(), true, "allocation cannot advance before exactly ten points");
     const musicIncrement = page.locator('[data-action="increment"][data-allocation="music"]');
     const musicDecrement = page.locator('[data-action="decrement"][data-allocation="music"]');
+    const allocationScroll = await page.evaluate(() => window.scrollY);
     await musicIncrement.focus();
     await musicIncrement.press("Enter");
     assert.equal(await page.locator('[data-allocation-input="music"]').inputValue(), "1");
+    assert.equal(await page.evaluate(() => window.scrollY), allocationScroll, "allocation controls must not move the viewport");
+    assert.equal(await page.evaluate(() => document.activeElement?.dataset.action), "increment", "allocation control keeps focus for repeated input");
     await musicDecrement.focus();
     await musicDecrement.press("Enter");
     assert.equal(await page.locator('[data-allocation-input="music"]').inputValue(), "0");
     await setAllocationWithKeyboard(page, { music: 2, stage: 2, mv: 2, promo: 2, rest: 2 });
-    await page.locator('[data-allocation-input="music"]').focus();
-    await page.locator('[data-allocation-input="music"]').press("ArrowUp");
+    const allocationInput = page.locator('[data-allocation-input="music"]');
+    const keyboardScroll = await page.evaluate(() => window.scrollY);
+    await allocationInput.focus();
+    await allocationInput.press("ArrowUp");
+    assert.equal(await page.evaluate(() => window.scrollY), keyboardScroll, "allocation arrow keys must not move the viewport");
+    assert.equal(await page.evaluate(() => document.activeElement?.dataset.allocationInput), "music", "allocation input keeps focus for repeated arrow-key input");
     assert.equal(await page.locator('[data-action="next-step"]').isDisabled(), true, "over-allocation cannot advance");
     assert.match(await page.locator("#allocation-status").textContent(), /11/);
     await page.locator('[data-allocation-input="music"]').focus();
@@ -325,14 +335,28 @@ test("keyboard-only navigation and game flow preserve focus, source links, and c
     await page.locator('[data-action="reset-game"]').press("Enter");
     assert.equal(await page.evaluate(() => document.activeElement?.name), "theme", "reset must focus first game choice");
 
-    const mediaCredits = await page.locator(".media-credit").allTextContents();
-    assert.equal(mediaCredits.length, EXPECTED_MEDIA_COUNT);
-    assert.ok(mediaCredits.every((credit) => credit.includes("圖片：") && credit.includes("CC BY") && credit.includes("Wikimedia Commons")));
-    assert.equal(mediaCredits.some((credit) => credit.includes("SBS Radio")), false, "retired SBS source must not appear in active figure credits");
+    const mediaCreditData = await page.locator(".media-credit").evaluateAll((credits) => credits.map((credit) => ({
+      text: credit.textContent,
+      licenseId: credit.querySelector('a[href^="#media-license-"]')?.textContent.trim(),
+      externalLinks: [...credit.querySelectorAll('a[href^="https://"]')].map((link) => link.textContent.trim()),
+    })));
+    assert.equal(mediaCreditData.length, EXPECTED_MEDIA_COUNT);
+    assert.ok(mediaCreditData.every(({ text, licenseId, externalLinks }) => /^M\d+$/.test(licenseId) && externalLinks.length === 2 && /CC BY/.test(text)), "figure credits must keep a concise M ID, author, and licence");
+    assert.equal(mediaCreditData.some(({ text }) => text.includes("SBS Radio")), false, "retired SBS source must not appear in active figure credits");
     assert.equal(await page.locator(".media-license-card").count(), MEDIA_SOURCES.length);
-    const mediaLinks = await page.locator(".media-credit a, .media-license-card a").evaluateAll((links) => links.map((link) => ({ href: link.href, target: link.target, rel: link.rel })));
-    assert.ok(mediaLinks.length >= EXPECTED_MEDIA_COUNT * 2 + MEDIA_SOURCES.length * 2);
-    assert.ok(mediaLinks.every((link) => /^https:\/\//.test(link.href) && link.target === "_blank" && /noopener/.test(link.rel) && /noreferrer/.test(link.rel)));
+    const mediaLinks = await page.locator(".media-credit a, .media-license-card a").evaluateAll((links) => links.map((link) => ({
+      href: link.href,
+      target: link.target,
+      rel: link.rel,
+      hash: link.hash,
+      targetExists: link.hash ? Boolean(document.querySelector(link.hash)) : null,
+    })));
+    const externalMediaLinks = mediaLinks.filter((link) => /^https:\/\//.test(link.href));
+    const internalMediaLinks = mediaLinks.filter((link) => /^#media-license-/.test(link.hash));
+    assert.ok(externalMediaLinks.length >= EXPECTED_MEDIA_COUNT * 2 + MEDIA_SOURCES.length * 2);
+    assert.ok(externalMediaLinks.every((link) => link.target === "_blank" && /noopener/.test(link.rel) && /noreferrer/.test(link.rel)));
+    assert.equal(internalMediaLinks.length, EXPECTED_MEDIA_COUNT);
+    assert.ok(internalMediaLinks.every((link) => link.targetExists));
     assert.ok(mediaLinks.some((link) => /creativecommons\.org/.test(link.href) && /license/.test(link.rel)));
 
     const externalLinks = await page.locator(".source-entry a.text-link").evaluateAll((links) => links.map((link) => ({ href: link.href, target: link.target, rel: link.rel })));
@@ -348,6 +372,8 @@ test("keyboard-only navigation and game flow preserve focus, source links, and c
     const badgeData = await page.locator(".source-badge").evaluateAll((links) => links.map((link) => ({ name: link.getAttribute("aria-label") || link.textContent.trim(), href: link.getAttribute("href"), targetExists: Boolean(document.querySelector(link.getAttribute("href"))) })));
     assert.ok(badgeData.length > 0);
     assert.ok(badgeData.every(({ name, href, targetExists }) => /S\d+[A-Z]?：/.test(name) && /^#source-S\d+[A-Z]?$/.test(href) && targetExists), "source badges need understandable names and valid targets");
+    assert.match(await page.locator("#source-S05 .source-entry__chapters").textContent(), /03 五條不同的路/);
+    assert.match(await page.locator("#source-S06 .source-entry__chapters").textContent(), /03 五條不同的路/);
   } finally {
     await context.close();
   }
@@ -385,6 +411,102 @@ test("source badges open the collapsed group that holds the entry they point at"
     await toggle.press("Enter");
     assert.equal(await page.locator(".source-group[open]").count(), 0);
     assert.equal(await toggle.getAttribute("aria-expanded"), "false");
+  } finally {
+    await context.close();
+  }
+});
+
+test("redesign exposes one primary route, four scenes, focus-safe navigation, and resumable reading", { timeout: 180_000 }, async (t) => {
+  if (skipReason()) return t.skip(skipReason());
+  const { context, page } = await newPage({ viewport: 390 });
+  try {
+    await load(page, "?seed=0");
+    assert.equal(await page.locator(".hero__actions .button--primary").count(), 1);
+    assert.equal(await page.locator('[data-route="story"]').textContent(), "先走完整故事");
+    assert.equal(await page.locator('[data-route="game"]').textContent(), "我已了解背景，直接玩");
+    assert.match(await page.locator(".hero__actions").innerText(), /10 分鐘/);
+    assert.match(await page.locator(".hero__actions").innerText(), /4–6 分鐘/);
+
+    const factPositions = await page.locator(".quick-fact").evaluateAll((items) => items.map((item) => ({ left: item.getBoundingClientRect().left, top: item.getBoundingClientRect().top })));
+    assert.equal(new Set(factPositions.map(({ left }) => Math.round(left))).size, 1, "390px Hero facts must use one column");
+    assert.ok(factPositions[1].top > factPositions[0].top && factPositions[2].top > factPositions[1].top);
+
+    const scenes = await page.locator("[data-chapter]").evaluateAll((sections) => [...new Set(sections.map((section) => section.dataset.scene))].sort());
+    assert.deepEqual(scenes, ["archive", "creation", "rehearsal", "stage"]);
+    const authored = await page.locator('[data-chapter]:not(#sources) [data-authored-unit]').evaluateAll((items) => ({ total: items.length, flat: items.filter((item) => item.dataset.treatment === "flat").length }));
+    assert.ok(authored.total > 0 && authored.flat / authored.total >= 0.4, `flat authored ratio is ${authored.flat}/${authored.total}`);
+
+    const toc = page.locator(".toc-toggle");
+    await toc.focus();
+    await toc.press("Enter");
+    await page.locator('[data-nav-link="paths"]').click();
+    await page.waitForFunction(() => document.activeElement?.id === "paths-title");
+    assert.equal(await page.evaluate(() => location.hash), "#paths");
+    const offset = await page.evaluate(() => ({ headingTop: document.querySelector("#paths-title").getBoundingClientRect().top, headerHeight: document.querySelector(".site-header").getBoundingClientRect().height }));
+    assert.ok(offset.headingTop >= offset.headerHeight - 2, JSON.stringify(offset));
+
+    await toc.focus();
+    await toc.press("Enter");
+    await page.locator("#paths .section-heading").click({ position: { x: 8, y: 8 } });
+    assert.equal(await page.evaluate(() => document.activeElement?.classList.contains("toc-toggle")), true, "outside click must restore TOC focus");
+
+    await page.evaluate(() => { location.hash = "#source-["; });
+    await page.waitForTimeout(50);
+    assert.deepEqual(page.__pageErrors ?? [], []);
+
+    await page.evaluate(() => {
+      sessionStorage.setItem("idle-creator-journey:reading:v1", JSON.stringify({ version: 1, chapterId: "restart", chapterNumber: "07", label: "像重新出道", updatedAt: new Date().toISOString() }));
+      history.replaceState(null, "", location.pathname + location.search);
+    });
+    await page.reload({ waitUntil: "networkidle" });
+    assert.equal(await page.locator("[data-resume-cue]").isVisible(), true);
+    await page.locator('[data-resume-action="continue"]').click();
+    await page.waitForFunction(() => document.activeElement?.id === "restart-title");
+  } finally {
+    await context.close();
+  }
+});
+
+test("decision-first game and source archive expose progressive details", { timeout: 180_000 }, async (t) => {
+  if (skipReason()) return t.skip(skipReason());
+  const { context, page } = await newPage({ viewport: 390 });
+  try {
+    await load(page, "?seed=0#comeback-game");
+    const order = await page.evaluate(() => {
+      const selectors = [".game-situation", ".game-notice", ".game-steps", "[data-game-decision]", ".game-controls", ".game-dashboard", "[data-game-status]"];
+      return selectors.map((selector) => [...document.querySelectorAll("#game-app *")].indexOf(document.querySelector(`#game-app ${selector}`)));
+    });
+    assert.ok(order.every((value, index) => index === 0 || value > order[index - 1]), `unexpected game order: ${order}`);
+    assert.equal(await page.locator('[data-action="next-step"]').isDisabled(), true);
+    assert.match(await page.locator("#next-step-reason").textContent(), /請先選擇/);
+    assert.equal(await page.locator(".game-metrics-details").getAttribute("open"), null);
+    assert.equal(await page.locator(".game-metrics-details meter").count(), EXPECTED_GAME_METRICS.length);
+    await page.locator(".game-metrics-details summary").click();
+
+    await chooseRadio(page, "theme", 0);
+    assert.equal(await page.locator(".game-metrics-details").getAttribute("open"), "");
+    assert.equal(await page.locator('[data-action="next-step"]').isDisabled(), false);
+    assert.match(await page.locator(".game-choice--selected .game-choice__impact").innerText(), /主要影響/);
+    assert.match(await page.locator(".game-choice--selected .game-choice__impact").innerText(), /[+-]\d/);
+
+    const filter = page.locator("[data-source-filter]");
+    await filter.scrollIntoViewIfNeeded();
+    await filter.fill("Spotify");
+    assert.match(await page.locator("[data-source-filter-status]").textContent(), /找到 \d+ 筆/);
+    assert.ok(await page.locator("[data-source-entry]:visible").count() >= 1);
+    await page.locator('a[href="#source-S06"]').first().click();
+    await page.waitForFunction(() => document.activeElement?.id === "source-S06");
+    assert.equal(await filter.inputValue(), "", "source deep link must clear a filter that hides its target");
+    assert.equal(await page.locator("#source-S06").isVisible(), true);
+
+    const mediaLink = page.locator('.media-credit a[href^="#media-license-"]').first();
+    await mediaLink.click();
+    await page.waitForFunction(() => document.activeElement?.id?.startsWith("media-license-"));
+    const activeMediaId = await page.evaluate(() => document.activeElement.id);
+    const audit = page.locator(`#${activeMediaId} .media-license-card__audit`);
+    await audit.locator("summary").click();
+    assert.match(await audit.innerText(), /查閱日期/);
+    assert.match(await audit.innerText(), /雜湊/);
   } finally {
     await context.close();
   }

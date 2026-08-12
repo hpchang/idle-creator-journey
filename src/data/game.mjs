@@ -8,6 +8,20 @@ export const GAME_CONFIG = {
     health: "團隊健康",
     brand: "長期品牌價值",
   },
+  metricExplanations: {
+    clarity: "作品的主題是否容易被理解。",
+    music: "歌曲與製作是否有足夠完成度。",
+    reach: "作品是否有清楚的觀眾入口。",
+    health: "團隊是否保留休息與應變空間。",
+    brand: "這次選擇是否支持長期辨識度。",
+  },
+  stepSituations: [
+    "每次回歸都先從一個問題開始：這次作品最想讓人記住什麼？",
+    "方向確定後，下一個取捨是誰主導、誰協作，以及團隊要承擔多少工作。",
+    "資源有限時，每一枚企劃點都代表你選擇先保護什麼。",
+    "計畫不會完全照表進行；現在要決定遇到變化時先保護什麼。",
+    "五個決定已完成，現在回頭看這次企劃保護了什麼、又犧牲了什麼。",
+  ],
   allocationLabels: {
     music: "歌曲製作",
     stage: "編舞與舞台",
@@ -154,7 +168,7 @@ export const RESULT_PROFILES = [
     id: "stage",
     label: "舞台體驗型",
     metricKeys: ["music", "reach"],
-    phrase: "用音樂與舞台建立第一個記憶點",
+    phrase: "音樂與舞台建立第一個記憶點",
     insight: "你重視觀眾實際感受到的作品；高強度呈現仍需要休息與備案。",
   },
   {

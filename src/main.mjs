@@ -4,12 +4,13 @@ import { MEMBERS } from "./data/members.mjs";
 import { ACTIVE_MEDIA, MEDIA, MEDIA_BY_ID, MEDIA_BY_PLACEMENT, MEDIA_SOURCES, RIGHTS_NOTICE } from "./data/media.mjs";
 import {
   CHAPTERS,
+  PHASES,
   RESTART_STRATEGIES,
   SITE_META,
   TAKEAWAYS,
   TRAINEE_SCENARIO,
 } from "./data/site.mjs";
-import { SOURCE_LIST, groupSourcesByTier } from "./data/sources.mjs";
+import { SOURCE_LIST, SOURCES_BY_ID, groupSourcesByTier } from "./data/sources.mjs";
 import { initGame } from "./game/controller.mjs";
 import { initCounter } from "./counter.mjs";
 import {
@@ -26,26 +27,98 @@ import {
 } from "./ui.mjs";
 
 const select = (selector, root = document) => root.querySelector(selector);
+const READING_KEY = "idle-creator-journey:reading:v1";
+let readingStorageResolved = false;
+let readingStorage = null;
+let readingStateCache;
+
+function getSessionStorage() {
+  if (readingStorageResolved) return readingStorage;
+  readingStorageResolved = true;
+  try {
+    const storage = window.sessionStorage;
+    const probe = `${READING_KEY}:probe`;
+    storage.setItem(probe, "1");
+    storage.removeItem(probe);
+    readingStorage = storage;
+  } catch {
+    readingStorage = null;
+  }
+  return readingStorage;
+}
+
+function readReadingState() {
+  if (readingStateCache !== undefined) return readingStateCache;
+  const storage = getSessionStorage();
+  if (!storage) return (readingStateCache = null);
+  try {
+    const value = JSON.parse(storage.getItem(READING_KEY) ?? "null");
+    readingStateCache = value?.version === 1 && CHAPTERS.some((chapter) => chapter.id === value.chapterId && chapter.resumeEligible) ? value : null;
+  } catch {
+    readingStateCache = null;
+  }
+  return readingStateCache;
+}
+
+function writeReadingState(chapter) {
+  if (!chapter?.resumeEligible) return;
+  const storage = getSessionStorage();
+  if (!storage) return;
+  const current = readReadingState();
+  const currentIndex = CHAPTERS.findIndex((item) => item.id === current?.chapterId);
+  const nextIndex = CHAPTERS.findIndex((item) => item.id === chapter.id);
+  if (chapter.id === current?.chapterId || nextIndex < currentIndex) return;
+  const nextState = {
+    version: 1,
+    chapterId: chapter.id,
+    chapterNumber: chapter.number,
+    label: chapter.label,
+    updatedAt: new Date().toISOString(),
+  };
+  try {
+    storage.setItem(READING_KEY, JSON.stringify(nextState));
+    readingStateCache = nextState;
+  } catch {
+    // Reading resume is an enhancement; storage failure must not block the article.
+  }
+}
 
 function renderNavigation() {
   const nav = select("[data-chapter-nav]");
+  const phaseNav = select("[data-phase-nav]");
   const toggle = select(".toc-toggle");
-  if (!nav || !toggle) return;
-  nav.innerHTML = `<ol>${CHAPTERS.map(
-    (chapter) => `<li><a href="#${chapter.id}" data-nav-link="${chapter.id}"><span>${chapter.number}</span>${escapeHtml(chapter.label)}</a></li>`,
-  ).join("")}</ol>`;
+  if (!nav || !phaseNav || !toggle) return;
+
+  phaseNav.innerHTML = `<ol>${PHASES.map((phase) => {
+    const firstChapter = CHAPTERS.find((chapter) => chapter.phaseId === phase.id);
+    return `<li><a href="#${escapeHtml(firstChapter?.id ?? "hero")}" data-phase-link="${escapeHtml(phase.id)}"><span>${escapeHtml(phase.shortLabel)}</span>${escapeHtml(phase.label)}</a></li>`;
+  }).join("")}</ol>`;
+
+  nav.innerHTML = `
+    <div class="chapter-nav__head">
+      <p><span>01–13</span> 完整章節清單</p>
+      <button class="chapter-nav__close" type="button" data-action="close-toc">關閉</button>
+    </div>
+    <ol>${CHAPTERS.map(
+      (chapter) => `<li><a href="#${chapter.id}" data-nav-link="${chapter.id}"><span>${chapter.number}</span>${escapeHtml(chapter.label)}</a></li>`,
+    ).join("")}</ol>`;
 
   const links = () => [...nav.querySelectorAll("a")];
   const setOpen = (open, { restoreFocus = false } = {}) => {
+    const focusedInside = nav.contains(document.activeElement);
     nav.classList.toggle("is-open", open);
     toggle.setAttribute("aria-expanded", String(open));
     if (open) links()[0]?.focus();
-    else if (restoreFocus) toggle.focus();
+    else if (restoreFocus || focusedInside) toggle.focus();
   };
+
   toggle.addEventListener("click", () => setOpen(!nav.classList.contains("is-open")));
   nav.addEventListener("click", (event) => {
-    if (!event.target.closest("a")) return;
-    setOpen(false);
+    if (event.target.closest("[data-action='close-toc']")) {
+      setOpen(false, { restoreFocus: true });
+      return;
+    }
+    if (event.target.closest("a")) setOpen(false);
   });
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && nav.classList.contains("is-open")) {
@@ -55,18 +128,18 @@ function renderNavigation() {
   });
   document.addEventListener("click", (event) => {
     if (!nav.classList.contains("is-open") || nav.contains(event.target) || toggle.contains(event.target)) return;
-    setOpen(false);
+    setOpen(false, { restoreFocus: true });
   });
 }
 
 function renderHeroMedia() {
   const root = select("[data-hero-media]");
   if (!root) return;
-  root.innerHTML = renderMedia(MEDIA_BY_PLACEMENT.hero, {
+  root.innerHTML = `${renderMedia(MEDIA_BY_PLACEMENT.hero, {
     className: "hero-media__figure media-figure--wide",
     loading: "eager",
     priority: true,
-  });
+  })}`;
 }
 
 function renderQuickFacts() {
@@ -77,15 +150,47 @@ function renderQuickFacts() {
   ];
   select("[data-quick-facts]").innerHTML = items
     .map(
-      ([year, label, fact]) => `
-      <article class="quick-fact">
-        <span>${year}</span>
-        <h2>${escapeHtml(label)}</h2>
-        <p>${escapeHtml(fact.text)}</p>
-        ${renderSourceBadges(fact.sourceIds)}
-      </article>`,
+      ([year, label, fact], index) => `
+      <li class="quick-fact" data-authored-unit data-treatment="flat">
+        <span class="quick-fact__index" aria-hidden="true">0${index + 1}</span>
+        <div class="quick-fact__body">
+          <span class="quick-fact__year">${year}</span>
+          <h2>${escapeHtml(label)}</h2>
+          ${renderSourceBadges(fact.sourceIds)}
+          <details>
+            <summary>查看這個時間點</summary>
+            <p>${escapeHtml(fact.text)}</p>
+          </details>
+        </div>
+      </li>`,
     )
     .join("");
+}
+
+function renderResumeCue() {
+  const root = select("[data-resume-cue]");
+  if (!root || window.location.hash) return;
+  const state = readReadingState();
+  const chapterIndex = CHAPTERS.findIndex((chapter) => chapter.id === state?.chapterId);
+  if (!state || chapterIndex <= 0) return;
+  root.hidden = false;
+  root.innerHTML = `
+    <p><span>繼續閱讀</span>你上次讀到第 ${escapeHtml(state.chapterNumber)} 章｜${escapeHtml(state.label)}</p>
+    <div class="resume-cue__actions">
+      <a class="button button--primary" href="#${escapeHtml(state.chapterId)}" data-resume-action="continue">繼續閱讀</a>
+      <button class="button button--ghost" type="button" data-resume-action="restart">從頭開始</button>
+    </div>`;
+  root.addEventListener("click", (event) => {
+    const action = event.target.closest("[data-resume-action]")?.dataset.resumeAction;
+    if (!action) return;
+    root.hidden = true;
+    if (action === "restart") {
+      getSessionStorage()?.removeItem(READING_KEY);
+      readingStateCache = null;
+      if (window.location.hash === "#hero") focusHashDestination("#hero");
+      else window.location.hash = "hero";
+    }
+  });
 }
 
 function renderTimeline() {
@@ -115,10 +220,11 @@ function renderTimeline() {
 }
 
 function renderMembers() {
-  select("[data-members]").innerHTML = MEMBERS.map(
+  const layouts = { miyeon: "ledger", minnie: "split", soyeon: "offset", yuqi: "quote", shuhua: "index" };
+  select("[data-members]").innerHTML = `${MEMBERS.map(
     (member, index) => `
-    <article class="member-card" style="--member-index: ${index}">
-      <div class="member-card__tab"><span>FILE 0${index + 1}</span>${renderSourceBadges(member.sourceIds)}</div>
+    <article class="member-card member-card--${layouts[member.id] ?? "ledger"}" style="--member-index: ${index}" data-authored-unit data-treatment="card">
+      <div class="member-card__tab"><span>0${index + 1}</span><span>${escapeHtml(member.name)}</span></div>
       ${member.mediaId
         ? renderMedia(MEDIA_BY_ID[member.mediaId], {
           className: "member-card__media media-figure--portrait",
@@ -128,24 +234,21 @@ function renderMembers() {
         })
         : renderMemberMediaFallback(member)}
       <h3>${escapeHtml(member.name)}</h3>
+      ${renderSourceBadges(member.sourceIds)}
       <dl>
         <div><dt>起點</dt><dd>${escapeHtml(member.start)}</dd></div>
         <div><dt>困難</dt><dd>${escapeHtml(member.challenge)}</dd></div>
         <div><dt>帶進團隊的能力</dt><dd>${escapeHtml(member.ability)}</dd></div>
       </dl>
       <blockquote>${escapeHtml(member.question)}</blockquote>
-      <details>
-        <summary>這張卡的資料限制</summary>
-        <p>${escapeHtml(member.caveat)}</p>
-      </details>
     </article>`,
-  ).join("");
+  ).join("")}`;
 }
 
 function renderTraineeScenario() {
   const root = select("[data-trainee-scenario]");
   root.innerHTML = `
-    <div class="scenario-card">
+    <div class="scenario-card" data-authored-unit data-treatment="card">
       <div class="scenario-card__prompt">
         <span class="scenario-card__stamp">情境，不是測驗</span>
         <p>${escapeHtml(TRAINEE_SCENARIO.prompt)}</p>
@@ -196,7 +299,7 @@ function renderDebut() {
     </div>
     <div class="role-board" aria-label="一般歌曲工作的編輯示意">
       <p class="sr-only">以下是編輯整理的一般工作示意，不是對 i-dle 每首作品的完整 credit 判定。</p>
-      ${roles.map(([name, description]) => `<article><span>${escapeHtml(name)}</span><p>${escapeHtml(description)}</p></article>`).join("")}
+      ${roles.map(([name, description]) => `<article data-authored-unit data-treatment="flat"><span>${escapeHtml(name)}</span><p>${escapeHtml(description)}</p></article>`).join("")}
     </div>`;
 }
 
@@ -210,7 +313,7 @@ function renderTurningPoint() {
   select("[data-turning-content]").innerHTML = `
     ${renderFact(FACTS_BY_ID["five-members"])}
     <div class="literacy-grid">${literacy
-      .map(([term, meaning], index) => `<article><span>0${index + 1}</span><h3>${escapeHtml(term)}</h3><p>${escapeHtml(meaning)}</p></article>`)
+      .map(([term, meaning], index) => `<article data-authored-unit data-treatment="flat"><span>0${index + 1}</span><h3>${escapeHtml(term)}</h3><p>${escapeHtml(meaning)}</p></article>`)
       .join("")}</div>
     <aside class="callout"><strong>編輯選擇</strong><p>本站不重述相關指控，也不把任何一方的說法寫成已被正式證明的事實。</p></aside>`;
 }
@@ -224,7 +327,7 @@ function renderRestart() {
       ${renderFact(FACTS_BY_ID["debut-again"])}
       ${renderFact(FACTS_BY_ID["tomboy-message"])}
     </div>
-    <div class="strategy-slider">
+    <div class="strategy-slider" data-authored-unit data-treatment="card">
       <label for="restart-range">危機後，你會把創作策略放在哪裡？</label>
       <div class="strategy-slider__ends"><span>維持原本風格</span><span>完全重新開始</span></div>
       <input id="restart-range" type="range" min="0" max="4" step="1" value="2" />
@@ -269,7 +372,7 @@ function renderSongPlate(song) {
 function renderCredits() {
   select("[data-credits]").innerHTML = SONG_CREDITS.map(
     (song) => `
-    <article class="credit-card">
+    <article class="credit-card" data-authored-unit data-treatment="card">
       ${renderSongPlate(song)}
       <div class="credit-card__body">
         <div class="credit-card__header"><span>正式 credit</span>${renderSourceBadges(song.sourceIds)}</div>
@@ -300,7 +403,7 @@ function renderBusiness() {
   select("[data-business-content]").innerHTML = `
     <div class="income-map" aria-label="一般音樂收入機制示意">
       <p class="sr-only">以下是依 S19、S20 整理的基礎分類，不是 i-dle 或任何成員的實際收入判定。</p>
-      ${incomeTypes.map(([title, copy, sourceIds]) => `<article><span aria-hidden="true"></span><h3>${escapeHtml(title)}</h3><p>${escapeHtml(copy)}</p>${renderSourceBadges(sourceIds)}</article>`).join("")}
+      ${incomeTypes.map(([title, copy, sourceIds]) => `<article data-authored-unit data-treatment="flat"><span aria-hidden="true"></span><h3>${escapeHtml(title)}</h3><p>${escapeHtml(copy)}</p>${renderSourceBadges(sourceIds)}</article>`).join("")}
     </div>
     <div class="business-facts">
       ${renderFact(FACTS_BY_ID.streamshare)}
@@ -317,14 +420,14 @@ function renderRenewal() {
       loading: "lazy",
     })}
     <div class="renewal-grid">
-      <article class="renewal-card"><span>2024.11.30</span><h3>一起續約</h3>${renderFact(FACTS_BY_ID.renewal, { compact: true })}</article>
-      <article class="renewal-card renewal-card--new"><span>2025.05.02</span><h3>成為 i-dle</h3>${renderFact(FACTS_BY_ID.rename, { compact: true })}${renderFact(FACTS_BY_ID["rename-meaning"], { compact: true })}</article>
+      <article class="renewal-card" data-authored-unit data-treatment="card"><span>2024.11.30</span><h3>一起續約</h3>${renderFact(FACTS_BY_ID.renewal, { compact: true })}</article>
+      <article class="renewal-card renewal-card--new" data-authored-unit data-treatment="card"><span>2025.05.02</span><h3>成為 i-dle</h3>${renderFact(FACTS_BY_ID.rename, { compact: true })}${renderFact(FACTS_BY_ID["rename-meaning"], { compact: true })}</article>
     </div>
     <blockquote class="chapter-question">改變名字是在否定過去，還是保留過去並重新決定未來？</blockquote>`;
 }
 
 function renderTakeaways() {
-  select("[data-takeaways]").innerHTML = `<ol class="takeaway-list">${TAKEAWAYS.map((item, index) => `<li><span>0${index + 1}</span><p>${escapeHtml(item)}</p></li>`).join("")}</ol>`;
+  select("[data-takeaways]").innerHTML = `<ol class="takeaway-list">${TAKEAWAYS.map((item, index) => `<li data-authored-unit data-treatment="flat"><span>0${index + 1}</span><p>${escapeHtml(item)}</p></li>`).join("")}</ol>`;
 }
 
 // Which chapters actually cite a source is derived from the badges already on the
@@ -337,7 +440,8 @@ function buildChapterIndex() {
     if (!section || section.id === "sources") continue;
     const chapter = chapterById.get(section.id);
     if (!chapter) continue;
-    const id = badge.textContent.trim();
+    const id = badge.getAttribute("href")?.replace(/^#source-/, "");
+    if (!id || !SOURCES_BY_ID[id]) continue;
     if (!index.has(id)) index.set(id, new Map());
     index.get(id).set(chapter.id, chapter);
   }
@@ -362,10 +466,10 @@ function renderMediaGroup() {
 function renderSources() {
   select("[data-source-method]").innerHTML = `
     <div class="method-grid">
-      <article><span>A</span><h3>第一手</h3><p>官方公告、官方 credit、成員本人完整訪談、正式 booklet。</p></article>
-      <article><span>B</span><h3>高可信媒體</h3><p>具編輯責任的通訊社、新聞媒體與產業機構。</p></article>
-      <article><span>C</span><h3>可用但需標限制</h3><p>二手引述或人物整理，要區分原話與媒體詮釋。</p></article>
-      <article><span>×</span><h3>不採用</h3><p>無來源 wiki、匿名爆料、身價網站、家庭傳聞與未公開合約推測。</p></article>
+      <article data-authored-unit data-treatment="flat"><span>A</span><h3>第一手</h3><p>官方公告、官方 credit、成員本人完整訪談、正式 booklet。</p></article>
+      <article data-authored-unit data-treatment="flat"><span>B</span><h3>高可信媒體</h3><p>具編輯責任的通訊社、新聞媒體與產業機構。</p></article>
+      <article data-authored-unit data-treatment="flat"><span>C</span><h3>可用但需標限制</h3><p>二手引述或人物整理，要區分原話與媒體詮釋。</p></article>
+      <article data-authored-unit data-treatment="flat"><span>×</span><h3>不採用</h3><p>無來源 wiki、匿名爆料、身價網站、家庭傳聞與未公開合約推測。</p></article>
     </div>
     <p class="method-note">來源標籤會帶你回到下方對應的分類；分類會自動展開。可信度是工作方法，不是替讀者停止思考。</p>`;
 
@@ -387,14 +491,63 @@ function renderSources() {
   });
 }
 
+function setupSourceLibraryFilters() {
+  const input = select("[data-source-filter]");
+  const status = select("[data-source-filter-status]");
+  if (!input) return;
+  const entries = [...document.querySelectorAll("[data-source-entry]")];
+  const groups = [...document.querySelectorAll(".source-library .source-group")].filter((group) => group.querySelector("[data-source-entry]"));
+  const update = () => {
+    const query = input.value.trim().toLocaleLowerCase("zh-Hant-TW");
+    let visibleCount = 0;
+    entries.forEach((entry) => {
+      const visible = !query || entry.dataset.sourceSearch.includes(query);
+      entry.hidden = !visible;
+      if (visible) visibleCount += 1;
+    });
+    groups.forEach((group) => {
+      const hasVisible = Boolean(group.querySelector("[data-source-entry]:not([hidden])"));
+      group.hidden = !hasVisible;
+      if (query && hasVisible) group.open = true;
+    });
+    if (status) status.textContent = query ? `找到 ${visibleCount} 筆文字來源。` : "";
+  };
+  input.addEventListener("input", update);
+}
+
+function syncHeaderHeight() {
+  const header = select("[data-site-header]");
+  if (!header) return;
+  const update = () => document.documentElement.style.setProperty("--header-height", `${Math.ceil(header.getBoundingClientRect().height)}px`);
+  update();
+  if (typeof globalThis.ResizeObserver === "function") new globalThis.ResizeObserver(update).observe(header);
+  else window.addEventListener("resize", update);
+}
+
 function setupChapterObserver() {
   const links = new Map([...document.querySelectorAll("[data-nav-link]")].map((link) => [link.dataset.navLink, link]));
+  const phaseLinks = new Map([...document.querySelectorAll("[data-phase-link]")].map((link) => [link.dataset.phaseLink, link]));
+  const phaseLabel = select("[data-current-phase]");
+  const chapterLabel = select("[data-current-chapter]");
   const sections = [...document.querySelectorAll("[data-chapter]")];
   if (!sections.length || !links.size) return;
-  const markCurrent = (id) => links.forEach((link, linkId) => {
-    if (linkId === id) link.setAttribute("aria-current", "location");
-    else link.removeAttribute("aria-current");
-  });
+
+  const markCurrent = (id) => {
+    const chapter = CHAPTERS.find((item) => item.id === id) ?? CHAPTERS[0];
+    const phase = PHASES.find((item) => item.id === chapter.phaseId) ?? PHASES[0];
+    links.forEach((link, linkId) => {
+      if (linkId === id) link.setAttribute("aria-current", "location");
+      else link.removeAttribute("aria-current");
+    });
+    phaseLinks.forEach((link, phaseId) => {
+      if (phaseId === phase.id) link.setAttribute("aria-current", "location");
+      else link.removeAttribute("aria-current");
+    });
+    if (phaseLabel) phaseLabel.textContent = phase.label;
+    if (chapterLabel) chapterLabel.textContent = `章節 ${chapter.number}｜${chapter.label}`;
+    writeReadingState(chapter);
+  };
+
   if (typeof globalThis.IntersectionObserver === "function") {
     const observer = new globalThis.IntersectionObserver(
       (entries) => {
@@ -403,11 +556,13 @@ function setupChapterObserver() {
           .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
         if (visible) markCurrent(visible.target.id);
       },
-      { rootMargin: "-20% 0px -65%", threshold: [0.05, 0.2, 0.5] },
+      { rootMargin: "-18% 0px -68%", threshold: [0.05, 0.2, 0.5] },
     );
     sections.forEach((section) => observer.observe(section));
+    markCurrent(sections[0].id);
     return;
   }
+
   const update = () => {
     const marker = window.innerHeight * 0.3;
     const current = sections.reduce((selected, section) => {
@@ -434,45 +589,91 @@ function setupReadingProgress() {
     bar.style.width = `${Math.max(0, Math.min(100, progress))}%`;
     ticking = false;
   };
-  window.addEventListener(
-    "scroll",
-    () => {
-      if (ticking) return;
-      ticking = true;
-      schedule(update);
-    },
-    { passive: true },
-  );
+  const requestUpdate = () => {
+    if (ticking) return;
+    ticking = true;
+    schedule(update);
+  };
+  window.addEventListener("scroll", requestUpdate, { passive: true });
+  window.addEventListener("resize", requestUpdate);
+  if (typeof globalThis.ResizeObserver === "function") new globalThis.ResizeObserver(requestUpdate).observe(document.body);
   update();
 }
 
-function setupSourceFocus() {
-  // Opening the ancestor accordions before the browser handles the fragment keeps
-  // the default anchor scroll, history entry, and :target highlight intact.
-  const reveal = (target) => {
-    for (let node = target.parentElement; node; node = node.parentElement) {
-      if (node instanceof HTMLDetailsElement) node.open = true;
-    }
-  };
-  document.addEventListener("click", (event) => {
-    const link = event.target.closest('a[href^="#source-"], a[href^="#media-license-"]');
-    if (!link) return;
-    const target = select(link.getAttribute("href"));
-    if (!target) return;
-    reveal(target);
-    window.setTimeout(() => target.focus({ preventScroll: true }), 350);
-  });
+function getHashDestination(hash = window.location.hash) {
+  if (!hash || hash === "#") return null;
+  let id;
+  try {
+    id = decodeURIComponent(hash.slice(1));
+  } catch {
+    return null;
+  }
+  return id ? document.getElementById(id) : null;
+}
 
-  const revealFromHash = () => {
-    if (!/^#(?:source|media-license)-/.test(window.location.hash)) return;
-    const target = select(window.location.hash);
-    if (!target) return;
-    reveal(target);
-    target.scrollIntoView();
-    target.focus({ preventScroll: true });
-  };
-  window.addEventListener("hashchange", revealFromHash);
-  revealFromHash();
+function openHashDisclosure(target) {
+  if (target?.matches("[data-source-entry]") && target.hidden) {
+    const filter = select("[data-source-filter]");
+    if (filter) {
+      filter.value = "";
+      filter.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+  }
+  target?.removeAttribute("hidden");
+  for (let node = target?.parentElement; node; node = node.parentElement) {
+    node.removeAttribute("hidden");
+    if (node instanceof HTMLDetailsElement) node.open = true;
+  }
+}
+
+function getDestinationFocusTarget(target) {
+  if (!target) return null;
+  if (target.matches("[data-chapter]")) {
+    const headingId = target.getAttribute("aria-labelledby");
+    return headingId ? document.getElementById(headingId) : target.querySelector("h1, h2");
+  }
+  return target;
+}
+
+function scrollToWithHeaderOffset(target) {
+  const headerHeight = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--header-height")) || 80;
+  const top = target.getBoundingClientRect().top + window.scrollY - headerHeight - 24;
+  const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+  window.scrollTo({ top: Math.max(0, top), behavior: reduced ? "auto" : "smooth" });
+}
+
+function focusHashDestination(hash = window.location.hash, { announce = true } = {}) {
+  const target = getHashDestination(hash);
+  const focusTarget = getDestinationFocusTarget(target);
+  if (!target || !focusTarget) return false;
+  openHashDisclosure(target);
+  const schedule = typeof globalThis.requestAnimationFrame === "function"
+    ? globalThis.requestAnimationFrame.bind(globalThis)
+    : (callback) => globalThis.setTimeout(callback, 0);
+  schedule(() => schedule(() => {
+    scrollToWithHeaderOffset(target);
+    focusTarget.setAttribute("tabindex", "-1");
+    focusTarget.focus({ preventScroll: true });
+    if (!announce) return;
+    const chapter = CHAPTERS.find((item) => item.id === target.id);
+    const status = select("[data-page-status]");
+    if (chapter) setLiveMessage(status, `已前往第 ${chapter.number} 章：${chapter.label}`);
+    else if (target.id.startsWith("source-") || target.id.startsWith("media-license-")) setLiveMessage(status, `已前往資料項目 ${target.id.replace(/^(?:source|media-license)-/, "")}`);
+  }));
+  return true;
+}
+
+function setupHashNavigation() {
+  document.addEventListener("click", (event) => {
+    const link = event.target.closest('a[href^="#"]');
+    if (!link) return;
+    const href = link.getAttribute("href");
+    if (!href || href === "#" || href !== window.location.hash) return;
+    event.preventDefault();
+    focusHashDestination(href);
+  });
+  window.addEventListener("hashchange", () => focusHashDestination(window.location.hash));
+  if (window.location.hash) focusHashDestination(window.location.hash);
 }
 
 function initialize() {
@@ -480,6 +681,7 @@ function initialize() {
   renderNavigation();
   renderHeroMedia();
   renderQuickFacts();
+  renderResumeCue();
   renderTimeline();
   renderMembers();
   renderTraineeScenario();
@@ -491,20 +693,21 @@ function initialize() {
   renderRenewal();
   renderTakeaways();
   renderSources();
+  setupSourceLibraryFilters();
   initGame(select("[data-game-app]"));
-  setupChapterObserver();
-  setupReadingProgress();
-  setupSourceFocus();
-  initCounter("idle-creator-journey");
 
   const status = document.createElement("p");
   status.className = "sr-only";
+  status.dataset.pageStatus = "";
   status.setAttribute("aria-live", "polite");
+  status.setAttribute("aria-atomic", "true");
   document.body.append(status);
-  window.addEventListener("hashchange", () => {
-    const chapter = CHAPTERS.find((item) => `#${item.id}` === window.location.hash);
-    if (chapter) setLiveMessage(status, `已前往第 ${chapter.number} 章：${chapter.label}`);
-  });
+
+  syncHeaderHeight();
+  setupChapterObserver();
+  setupReadingProgress();
+  setupHashNavigation();
+  initCounter("idle-creator-journey");
 
   document.documentElement.dataset.updated = SITE_META.updatedAt;
 }

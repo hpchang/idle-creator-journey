@@ -10,13 +10,14 @@ import { FACTS, FACTS_BY_ID } from "../src/data/facts.mjs";
 import { GAME_CONFIG, GAME_EVENTS, GAME_THEMES, PRODUCTION_CHOICES } from "../src/data/game.mjs";
 import { ACTIVE_MEDIA, MEDIA, MEDIA_BY_ID, MEDIA_BY_PLACEMENT, MEDIA_SOURCE_BY_ID, MEDIA_SOURCES } from "../src/data/media.mjs";
 import { MEMBERS } from "../src/data/members.mjs";
-import { CHAPTERS, SITE_META, TAKEAWAYS, TRAINEE_SCENARIO } from "../src/data/site.mjs";
+import { CHAPTERS, PHASES, SITE_META, TAKEAWAYS, TRAINEE_SCENARIO } from "../src/data/site.mjs";
 import { SOURCE_LIST, SOURCES_BY_ID } from "../src/data/sources.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (relativePath) => fs.readFileSync(path.join(ROOT, relativePath), "utf8");
 const html = read("index.html");
 const mainScript = read("src/main.mjs");
+const gameView = read("src/game/view.mjs");
 const sourceRegister = read("docs/SOURCE_REGISTER.md");
 const sourceIdsInRegister = new Set([...sourceRegister.matchAll(/^## (S\d+[A-Z]?)｜/gm)].map((match) => match[1]));
 const allKnownSourceIds = new Set(SOURCE_LIST.map((source) => source.id));
@@ -48,7 +49,17 @@ test("confirmed page metadata and all 13 chapter routes stay synchronized", () =
   assert.equal(new Set(sectionIds).size, CHAPTERS.length);
   for (const chapter of CHAPTERS) {
     assert.match(html, new RegExp(`<section[^>]*id="${chapter.id}"[^>]*aria-labelledby="[^"]+"`));
+    assert.match(html, new RegExp(`<section[^>]*id="${chapter.id}"[^>]*data-scene="${chapter.sceneId}"`));
+    assert.ok(PHASES.some((phase) => phase.id === chapter.phaseId));
   }
+  assert.equal(new Set(PHASES.map((phase) => phase.id)).size, PHASES.length);
+  assert.ok(PHASES.every((phase) => CHAPTERS.some((chapter) => chapter.phaseId === phase.id)));
+  assert.ok(CHAPTERS.slice(0, 12).every((chapter) => chapter.resumeEligible));
+  assert.equal(CHAPTERS.at(-1).resumeEligible, false);
+  assert.match(html, /先走完整故事/);
+  assert.match(html, /我已了解背景，直接玩/);
+  assert.match(html, /故事路線約 10 分鐘/);
+  assert.match(html, /約 4–6 分鐘/);
 
   const linkedStylesheets = [...html.matchAll(/<link[^>]+rel="stylesheet"[^>]+href="([^"]+)"/g)].map((match) => match[1]);
   assert.deepEqual(linkedStylesheets, ["css/tokens.css", "css/base.css", "css/layout.css", "css/components.css", "css/game.css"]);
@@ -86,6 +97,8 @@ test("licensed media assets are local, traceable, distinct, and placement-driven
     Array(5).fill("Robbie Klinkenberg"),
     "all five member portraits should come from the same photographer and concert series",
   );
+  assert.equal(new Set(MEMBERS.map((member) => MEDIA_BY_ID[member.mediaId]?.source.capturedAt)).size, 1);
+  assert.ok(MEMBERS.every((member) => member.sourceIds.every((id) => allKnownSourceIds.has(id))));
 
   for (const source of MEDIA_SOURCES) {
     assert.match(source.filePageUrl, /^https:\/\/commons\.wikimedia\.org\//);
@@ -186,6 +199,8 @@ test("member cards, credits, and learning content preserve required coverage", (
 test("the game data exposes exactly the brief's resources and five metrics", () => {
   assert.deepEqual(GAME_CONFIG.initialResources, { points: 10, energy: 5, weeks: 4 });
   assert.deepEqual(Object.keys(GAME_CONFIG.metricLabels), ["clarity", "music", "reach", "health", "brand"]);
+  assert.deepEqual(Object.keys(GAME_CONFIG.metricExplanations), Object.keys(GAME_CONFIG.metricLabels));
+  assert.equal(GAME_CONFIG.stepSituations.length, 5);
   assert.deepEqual(Object.keys(GAME_CONFIG.allocationLabels), ["music", "stage", "mv", "promo", "rest"]);
   assert.equal(GAME_THEMES.length, 5);
   assert.equal(PRODUCTION_CHOICES.length, 3);
@@ -193,6 +208,10 @@ test("the game data exposes exactly the brief's resources and five metrics", () 
   assert.ok(GAME_EVENTS.every((event) => event.choices.length >= 3));
   assert.match(SITE_META.simulationNotice, /教育模擬/);
   assert.match(SITE_META.simulationNotice, /不使用.*真實預算.*合約.*分潤/);
+  assert.match(gameView, /企劃完成：你做了 5 個決定。/);
+  assert.match(gameView, /這次的決策傾向/);
+  assert.match(gameView, /這不是固定人格或能力測驗/);
+  assert.match(gameView, /帶走我的企劃句/);
 });
 
 test("all content source references are attached to non-empty, traceable records", () => {

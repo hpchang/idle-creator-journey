@@ -3,14 +3,33 @@ import { SITE_META } from "../data/site.mjs";
 import { escapeHtml, renderMetricMeter, renderSourceBadges } from "../ui.mjs";
 import { computeGameState, getResult, validateAllocation } from "./model.mjs";
 
+function formatDelta(value) {
+  const number = Number(value) || 0;
+  return `${number > 0 ? "+" : ""}${number}`;
+}
+
+function renderChoiceImpact(choice, selected) {
+  if (!selected || !choice.metrics) return "";
+  const impacts = Object.entries(choice.metrics)
+    .filter(([, value]) => value !== 0)
+    .sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))
+    .slice(0, 2);
+  if (!impacts.length) return "";
+  return `<p class="game-choice__impact"><span>這次選擇的主要影響</span>${impacts
+    .map(([key, value]) => `<strong>${escapeHtml(GAME_CONFIG.metricLabels[key])} ${escapeHtml(formatDelta(value))}</strong>`)
+    .join(" · ")}</p>`;
+}
+
 function renderChoice(choice, groupName, selectedId) {
+  const selected = choice.id === selectedId;
   return `
-    <div class="game-choice${choice.id === selectedId ? " game-choice--selected" : ""}">
+    <div class="game-choice${selected ? " game-choice--selected" : ""}">
       <label>
-        <input type="radio" name="${escapeHtml(groupName)}" value="${escapeHtml(choice.id)}" ${choice.id === selectedId ? "checked" : ""} />
+        <input type="radio" name="${escapeHtml(groupName)}" value="${escapeHtml(choice.id)}" ${selected ? "checked" : ""} />
         <span class="game-choice__marker" aria-hidden="true"></span>
         <span><strong>${escapeHtml(choice.label)}</strong><small>${escapeHtml(choice.description ?? "")}</small></span>
       </label>
+      ${renderChoiceImpact(choice, selected)}
       ${choice.sourceIds ? `<div class="game-choice__sources">${renderSourceBadges(choice.sourceIds)}</div>` : ""}
     </div>`;
 }
@@ -18,24 +37,28 @@ function renderChoice(choice, groupName, selectedId) {
 function renderResourceSummary(state) {
   const { resources, metrics } = computeGameState(state);
   return `
-    <div class="game-dashboard" role="region" aria-labelledby="game-dashboard-title">
+    <aside class="game-dashboard" role="region" aria-labelledby="game-dashboard-title">
       <h2 id="game-dashboard-title" class="sr-only">目前企劃狀態</h2>
-      <div class="resource-row">
+      <div class="resource-row" aria-label="目前可用資源">
         <span><strong>${resources.points}</strong> 企劃點</span>
         <span><strong>${resources.energy}</strong> 團隊能量</span>
         <span><strong>${resources.weeks}</strong> 週</span>
       </div>
-      <div class="metric-grid">${Object.entries(GAME_CONFIG.metricLabels)
-        .map(([key, label]) => renderMetricMeter(key, label, metrics[key]))
-        .join("")}</div>
-    </div>`;
+      <details class="game-metrics-details">
+        <summary>查看全部指標</summary>
+        <p>五項指標使用 0–100 的教育模擬尺度，不是讀者能力分數。</p>
+        <div class="metric-grid">${Object.entries(GAME_CONFIG.metricLabels)
+          .map(([key, label]) => `<div class="metric-item">${renderMetricMeter(key, label, metrics[key])}<p class="metric__explanation">${escapeHtml(GAME_CONFIG.metricExplanations[key])}</p></div>`)
+          .join("")}</div>
+      </details>
+    </aside>`;
 }
 
 function renderStepOne(state) {
   return `
     <fieldset class="game-step__fieldset">
       <legend>第一關：這次作品想說什麼？</legend>
-      <p class="game-step__hint">先選擇方向。沒有哪個主題會自動換來成功。</p>
+      <p class="game-step__hint">先選一張主題卡，下一步就會亮起。沒有哪個主題會自動換來成功。</p>
       <div class="game-choice-grid">${GAME_THEMES.map((choice) => renderChoice(choice, "theme", state.themeId)).join("")}</div>
     </fieldset>`;
 }
@@ -82,6 +105,7 @@ function renderStepFour(state) {
     </div>
     <fieldset class="game-step__fieldset">
       <legend>你要怎麼處理？</legend>
+      <p class="game-step__hint">先選擇你要保護的事，再看這個取捨如何改變企劃。</p>
       <div class="game-choice-grid">${event.choices.map((choice) => renderChoice(choice, "event-choice", state.eventChoiceId)).join("")}</div>
     </fieldset>`;
 }
@@ -91,43 +115,58 @@ function renderStepFive(state) {
   const metricLabel = GAME_CONFIG.metricLabels[result.strongestMetric];
   const tradeoffLabel = GAME_CONFIG.metricLabels[result.tradeoffMetric];
   return `
-    <article class="result-card" aria-labelledby="result-title">
-      <p class="result-card__eyebrow">你的企劃人格</p>
-      <h3 id="result-title">${escapeHtml(result.profile.label)}</h3>
+    <article class="result-card" data-result-panel tabindex="-1" aria-labelledby="result-title">
+      <p class="result-card__eyebrow">企劃完成：你做了 5 個決定。</p>
+      <h3 id="result-title">這次的決策傾向：${escapeHtml(result.profile.label)}</h3>
       <p class="result-card__insight">${escapeHtml(result.profile.insight)}</p>
+      <p class="result-card__disclaimer">這不是固定人格或能力測驗，而是這一次有限資源下的選擇結果。</p>
       <div class="result-card__balance">
         <p><span>最被你保護的</span><strong>${escapeHtml(metricLabel)}</strong></p>
         <p><span>這次最大的取捨</span><strong>${escapeHtml(tradeoffLabel)}</strong></p>
       </div>
       <blockquote>${escapeHtml(result.shareText)}</blockquote>
-      <label class="share-fallback" for="share-text">分享文字</label>
+      <label class="share-fallback" for="share-text">教育模擬結果</label>
       <textarea id="share-text" readonly rows="3" aria-describedby="share-text-help">${escapeHtml(result.shareText)}</textarea>
-      <p id="share-text-help" class="sr-only">可用複製按鈕，或聚焦後使用鍵盤複製。</p>
+      <p id="share-text-help" class="sr-only">可用帶走企劃句按鈕，或聚焦後使用鍵盤複製。</p>
       <div class="result-card__actions">
-        <button class="button button--primary" type="button" data-action="copy-result">複製分享文字</button>
+        <button class="button button--primary" type="button" data-action="copy-result">帶走我的企劃句</button>
         <button class="button button--ghost" type="button" data-action="reset-game">重新企劃</button>
+        <a class="text-link" href="#music-business">回到故事路線</a>
       </div>
       <p class="game-live" data-copy-status aria-live="polite"></p>
     </article>`;
+}
+
+function getStepStatus(state, currentStep) {
+  if (currentStep === 1) return state.themeId
+    ? { canGoNext: true, reason: "可以前往下一步。" }
+    : { canGoNext: false, reason: "請先選擇一個作品主題。" };
+  if (currentStep === 2) return state.productionId
+    ? { canGoNext: true, reason: "可以前往下一步。" }
+    : { canGoNext: false, reason: "請先選擇歌曲製作方式。" };
+  if (currentStep === 3) {
+    const validation = validateAllocation(state.allocation);
+    return { canGoNext: validation.valid, reason: validation.message };
+  }
+  if (currentStep === 4) return state.eventChoiceId
+    ? { canGoNext: true, reason: "可以查看企劃結果。" }
+    : { canGoNext: false, reason: "請先選擇一個突發事件處理方式。" };
+  return { canGoNext: false, reason: "企劃已完成。" };
 }
 
 export function renderGame(root, state) {
   const stepLabels = ["作品主題", "製作方式", "資源分配", "突發事件", "結果卡"];
   const panels = [renderStepOne, renderStepTwo, renderStepThree, renderStepFour, renderStepFive];
   const currentStep = Math.max(1, Math.min(panels.length, Number(state.step) || 1));
-  const canGoNext =
-    (currentStep === 1 && Boolean(state.themeId)) ||
-    (currentStep === 2 && Boolean(state.productionId)) ||
-    (currentStep === 3 && validateAllocation(state.allocation).valid) ||
-    (currentStep === 4 && Boolean(state.eventChoiceId));
+  const { canGoNext, reason: disabledReason } = getStepStatus(state, currentStep);
 
   root.innerHTML = `
+    <p class="game-situation">${escapeHtml(GAME_CONFIG.stepSituations[currentStep - 1])}</p>
     <div class="game-notice"><strong>教育模擬</strong><p>${escapeHtml(SITE_META.simulationNotice)}</p></div>
     <ol class="game-steps" aria-label="遊戲進度">${stepLabels
       .map((label, index) => `<li class="${currentStep === index + 1 ? "is-current" : currentStep > index + 1 ? "is-complete" : ""}" ${currentStep === index + 1 ? 'aria-current="step"' : ""}><span>${index + 1}</span>${escapeHtml(label)}</li>`)
       .join("")}</ol>
-    ${renderResourceSummary(state)}
-    <section class="game-panel" tabindex="-1" role="region" aria-labelledby="game-step-title">
+    <section class="game-panel" tabindex="-1" role="region" aria-labelledby="game-step-title" data-game-decision>
       <h2 id="game-step-title" class="sr-only">第 ${currentStep} 關：${escapeHtml(stepLabels[currentStep - 1])}</h2>
       ${panels[currentStep - 1](state)}
     </section>
@@ -135,9 +174,14 @@ export function renderGame(root, state) {
       currentStep < 5
         ? `<div class="game-controls">
             <button class="button button--ghost" type="button" data-action="previous-step" ${currentStep === 1 ? "disabled" : ""}>上一步</button>
-            <button class="button button--primary" type="button" data-action="next-step" ${canGoNext ? "" : "disabled"}>${currentStep === 4 ? "看企劃結果" : "下一步"}</button>
+            <div class="game-controls__primary">
+              <button class="button button--primary" type="button" data-action="next-step" aria-describedby="next-step-reason" ${canGoNext ? "" : "disabled"}>${currentStep === 4 ? "看企劃結果" : "下一步"}</button>
+              <p id="next-step-reason" class="game-next-reason ${canGoNext ? "is-ready" : ""}">${escapeHtml(disabledReason)}</p>
+            </div>
+            <p class="game-completion">已完成 ${Math.max(0, currentStep - 1)}／5 個決定</p>
           </div>`
         : ""
     }
+    ${renderResourceSummary(state)}
     <p class="game-live" data-game-status aria-live="polite"></p>`;
 }

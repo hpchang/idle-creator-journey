@@ -118,7 +118,7 @@ a:hover {
   box-shadow: var(--ring);
 }
 
-:where(.section--dark, .section--game, .site-footer) :where(a, button, input, textarea, select, summary):focus-visible {
+:where([data-scene="rehearsal"], [data-scene="stage"], .site-footer) :where(a, button, input, textarea, select, summary):focus-visible {
   outline-color: var(--color-focus-dark);
   box-shadow: 0 0 0 3px rgb(255 211 106 / 0.3);
 }

@@ -9,29 +9,28 @@ export const SITE_META = {
     "本遊戲是根據音樂製作及回歸流程設計的教育模擬，不使用 Cube 或 i-dle 未公開的真實預算、合約及分潤資料。",
 };
 
-export const CHAPTERS = [
-  { id: "hero", number: "01", label: "創造舞台" },
-  { id: "who", number: "02", label: "她們是誰" },
-  { id: "paths", number: "03", label: "五條路" },
-  { id: "trainee", number: "04", label: "練習生選擇" },
-  { id: "debut", number: "05", label: "第一次出道" },
-  { id: "turning-point", number: "06", label: "團隊改變" },
-  { id: "restart", number: "07", label: "像重新出道" },
-  { id: "studio", number: "08", label: "創作室" },
-  { id: "comeback-game", number: "09", label: "回歸企劃" },
-  { id: "music-business", number: "10", label: "一首歌的收入" },
-  { id: "renewal", number: "11", label: "續約與改名" },
-  { id: "takeaway", number: "12", label: "帶回自己" },
-  { id: "sources", number: "13", label: "來源與方法" },
+export const PHASES = [
+  { id: "archive", label: "檔案", shortLabel: "FILE" },
+  { id: "rehearsal", label: "排練", shortLabel: "REHEARSAL" },
+  { id: "stage", label: "舞台", shortLabel: "STAGE" },
+  { id: "creation", label: "創作", shortLabel: "CREATE" },
 ];
 
-export const FACT_TYPE_LABELS = {
-  official: "官方／第一手",
-  interview: "成員受訪",
-  media: "媒體報導",
-  editorial: "編輯說明",
-  simulation: "教育模擬",
-};
+export const CHAPTERS = [
+  { id: "hero", number: "01", label: "創造舞台", phaseId: "archive", sceneId: "archive", resumeEligible: true },
+  { id: "who", number: "02", label: "她們是誰", phaseId: "archive", sceneId: "archive", resumeEligible: true },
+  { id: "paths", number: "03", label: "五條不同的路", phaseId: "archive", sceneId: "archive", resumeEligible: true },
+  { id: "trainee", number: "04", label: "練習生選擇", phaseId: "rehearsal", sceneId: "rehearsal", resumeEligible: true },
+  { id: "debut", number: "05", label: "第一次出道", phaseId: "rehearsal", sceneId: "rehearsal", resumeEligible: true },
+  { id: "turning-point", number: "06", label: "團隊改變", phaseId: "rehearsal", sceneId: "rehearsal", resumeEligible: true },
+  { id: "restart", number: "07", label: "像重新出道", phaseId: "stage", sceneId: "stage", resumeEligible: true },
+  { id: "studio", number: "08", label: "創作室", phaseId: "stage", sceneId: "stage", resumeEligible: true },
+  { id: "comeback-game", number: "09", label: "回歸企劃", phaseId: "stage", sceneId: "stage", resumeEligible: true },
+  { id: "music-business", number: "10", label: "一首歌的收入", phaseId: "creation", sceneId: "creation", resumeEligible: true },
+  { id: "renewal", number: "11", label: "續約與改名", phaseId: "creation", sceneId: "creation", resumeEligible: true },
+  { id: "takeaway", number: "12", label: "帶回自己", phaseId: "creation", sceneId: "creation", resumeEligible: true },
+  { id: "sources", number: "13", label: "來源與方法", phaseId: "creation", sceneId: "creation", resumeEligible: false },
+];
 
 export const TRAINEE_SCENARIO = {
   prompt:

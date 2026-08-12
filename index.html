@@ -58,14 +58,19 @@
         <span class="wordmark__mark" aria-hidden="true">i</span>
         <span>i-dle / create</span>
       </a>
+      <nav class="phase-nav" aria-label="故事階段" data-phase-nav></nav>
+      <div class="site-header__context" aria-live="polite" aria-atomic="true">
+        <span class="site-header__phase" data-current-phase>檔案</span>
+        <span class="site-header__chapter" data-current-chapter>章節 01｜創造舞台</span>
+      </div>
       <button class="toc-toggle" type="button" aria-expanded="false" aria-controls="chapter-nav">
-        章節
+        章節清單
       </button>
       <nav id="chapter-nav" class="chapter-nav" aria-label="章節導覽" data-chapter-nav></nav>
     </header>
 
     <main id="main-content">
-      <section id="hero" class="hero stage-section" aria-labelledby="hero-title" data-chapter="01">
+      <section id="hero" class="hero stage-section" aria-labelledby="hero-title" data-chapter="01" data-scene="archive">
         <div class="hero__paper" aria-hidden="true"></div>
         <div class="section-shell hero__content">
           <p class="eyebrow">i-dle（原名 (G)I-DLE）／一份給青少年的成長檔案</p>
@@ -74,18 +79,26 @@
             從試鏡、跨國移動、團隊改變到參與作品決定：這不是「只要努力就一定成功」的故事，而是一份關於能力、機會、合作與重新開始的觀察。
           </p>
           <div class="hero__media" data-hero-media></div>
-          <div class="hero__actions">
-            <a class="button button--primary" href="#who">開始她們的故事</a>
-            <a class="button button--ghost" href="#comeback-game">直接挑戰回歸企劃</a>
+          <div class="hero__actions" aria-label="選擇閱讀路線">
+            <div class="hero-route hero-route--primary">
+              <a class="button button--primary" href="#who" data-route="story">先走完整故事</a>
+              <small>13 章｜故事路線約 10 分鐘，資料庫可跳過</small>
+            </div>
+            <div class="hero-route hero-route--secondary">
+              <a class="button button--ghost" href="#comeback-game" data-route="game">我已了解背景，直接玩</a>
+              <small>約 4–6 分鐘｜會略過前 8 章背景</small>
+            </div>
           </div>
-          <div class="quick-facts" data-quick-facts></div>
+          <p class="hero__route-cue">推薦先看故事，再挑戰回歸企劃；兩條路都可以。</p>
+          <div class="resume-cue" data-resume-cue hidden></div>
+          <ol class="quick-facts" data-quick-facts aria-label="三個重要時間點"></ol>
           <p class="hero__note">首頁問題是編輯提問，不是成員名言。</p>
         </div>
       </section>
 
       <div class="reading-progress" aria-hidden="true"><span data-reading-progress></span></div>
 
-      <section id="who" class="stage-section section--paper" aria-labelledby="who-title" data-chapter="02">
+      <section id="who" class="stage-section" aria-labelledby="who-title" data-chapter="02" data-scene="archive">
         <div class="section-shell">
           <div class="section-heading">
             <p class="chapter-kicker">02 / 團體快速時間軸</p>
@@ -96,7 +109,7 @@
         </div>
       </section>
 
-      <section id="paths" class="stage-section section--folder" aria-labelledby="paths-title" data-chapter="03">
+      <section id="paths" class="stage-section" aria-labelledby="paths-title" data-chapter="03" data-scene="archive">
         <div class="section-shell">
           <div class="section-heading">
             <p class="chapter-kicker">03 / 五份試鏡檔案</p>
@@ -107,7 +120,7 @@
         </div>
       </section>
 
-      <section id="trainee" class="stage-section section--dark" aria-labelledby="trainee-title" data-chapter="04">
+      <section id="trainee" class="stage-section" aria-labelledby="trainee-title" data-chapter="04" data-scene="rehearsal">
         <div class="section-shell section-shell--narrow">
           <div class="section-heading">
             <p class="chapter-kicker">04 / 你的選擇</p>
@@ -118,7 +131,7 @@
         </div>
       </section>
 
-      <section id="debut" class="stage-section section--paper" aria-labelledby="debut-title" data-chapter="05">
+      <section id="debut" class="stage-section" aria-labelledby="debut-title" data-chapter="05" data-scene="rehearsal">
         <div class="section-shell">
           <div class="section-heading">
             <p class="chapter-kicker">05 / 第一個正式舞台</p>
@@ -129,7 +142,7 @@
         </div>
       </section>
 
-      <section id="turning-point" class="stage-section section--signal" aria-labelledby="turning-title" data-chapter="06">
+      <section id="turning-point" class="stage-section" aria-labelledby="turning-title" data-chapter="06" data-scene="rehearsal">
         <div class="section-shell">
           <div class="section-heading">
             <p class="chapter-kicker">06 / 可確認的結果</p>
@@ -140,7 +153,7 @@
         </div>
       </section>
 
-      <section id="restart" class="stage-section section--dark" aria-labelledby="restart-title" data-chapter="07">
+      <section id="restart" class="stage-section" aria-labelledby="restart-title" data-chapter="07" data-scene="stage">
         <div class="section-shell">
           <div class="section-heading">
             <p class="chapter-kicker">07 / 重新排列五個位置</p>
@@ -151,7 +164,7 @@
         </div>
       </section>
 
-      <section id="studio" class="stage-section section--studio" aria-labelledby="studio-title" data-chapter="08">
+      <section id="studio" class="stage-section" aria-labelledby="studio-title" data-chapter="08" data-scene="stage">
         <div class="section-shell">
           <div class="section-heading">
             <p class="chapter-kicker">08 / 讀懂 credit</p>
@@ -163,7 +176,7 @@
         </div>
       </section>
 
-      <section id="comeback-game" class="stage-section section--game" aria-labelledby="game-title" data-chapter="09">
+      <section id="comeback-game" class="stage-section" aria-labelledby="game-title" data-chapter="09" data-scene="stage">
         <div class="section-shell">
           <div class="section-heading">
             <p class="chapter-kicker">09 / 核心互動</p>
@@ -174,7 +187,7 @@
         </div>
       </section>
 
-      <section id="music-business" class="stage-section section--paper" aria-labelledby="business-title" data-chapter="10">
+      <section id="music-business" class="stage-section" aria-labelledby="business-title" data-chapter="10" data-scene="creation">
         <div class="section-shell">
           <div class="section-heading">
             <p class="chapter-kicker">10 / 基礎音樂商業</p>
@@ -185,7 +198,7 @@
         </div>
       </section>
 
-      <section id="renewal" class="stage-section section--brand" aria-labelledby="renewal-title" data-chapter="11">
+      <section id="renewal" class="stage-section" aria-labelledby="renewal-title" data-chapter="11" data-scene="creation">
         <div class="section-shell">
           <div class="section-heading">
             <p class="chapter-kicker">11 / 保留過去，重寫未來</p>
@@ -196,7 +209,7 @@
         </div>
       </section>
 
-      <section id="takeaway" class="stage-section section--dark" aria-labelledby="takeaway-title" data-chapter="12">
+      <section id="takeaway" class="stage-section" aria-labelledby="takeaway-title" data-chapter="12" data-scene="creation">
         <div class="section-shell section-shell--narrow">
           <div class="section-heading">
             <p class="chapter-kicker">12 / 把故事帶回自己</p>
@@ -209,7 +222,7 @@
         </div>
       </section>
 
-      <section id="sources" class="stage-section section--sources" aria-labelledby="sources-title" data-chapter="13">
+      <section id="sources" class="stage-section" aria-labelledby="sources-title" data-chapter="13" data-scene="creation">
         <div class="section-shell">
           <div class="section-heading">
             <p class="chapter-kicker">13 / 資料來源與可信度</p>

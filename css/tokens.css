@@ -73,6 +73,11 @@
   --max-content: 74rem;
   --max-copy: 44rem;
   --header-height: 4.5rem;
+  --scene-paper: #f6efe4;
+  --scene-plum: #321b2f;
+  --scene-gold: #d99b47;
+  --scene-teal: #2d7f75;
+  --surface-interaction: #fffdf9;
   --ease-standard: cubic-bezier(0.2, 0.75, 0.25, 1);
 }
 

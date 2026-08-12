@@ -1,4 +1,3 @@
-import { FACT_TYPE_LABELS } from "./data/site.mjs";
 import { SOURCES_BY_ID } from "./data/sources.mjs";
 
 export function escapeHtml(value = "") {
@@ -15,9 +14,9 @@ export function renderMediaAttribution(media, { compact = false } = {}) {
   return `
     <figcaption class="media-credit${compact ? " media-credit--compact" : ""}">
       ${media.caption ? `<span class="media-credit__caption">${escapeHtml(media.caption)}</span>` : ""}
-      <span>圖片：<a href="${escapeHtml(source.filePageUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(source.author)}／${escapeHtml(source.sourceName)}</a></span>
+      <span><a href="#media-license-${escapeHtml(source.id)}" aria-label="查看圖片授權 ${escapeHtml(source.id)}">${escapeHtml(source.id)}</a></span>
+      <span><a href="${escapeHtml(source.filePageUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(source.author)}</a></span>
       <span><a href="${escapeHtml(source.licenseUrl)}" target="_blank" rel="license noopener noreferrer">${escapeHtml(source.licenseName)}</a></span>
-      <span>${escapeHtml(media.modified)}</span>
     </figcaption>`;
 }
 
@@ -74,8 +73,12 @@ export function renderMediaLicenseCard(source, media = []) {
       <details class="media-license-card__audit">
         <summary>核對紀錄與技術資料<span class="sr-only">（${escapeHtml(source.id)}）</span></summary>
         <dl>
+          <div><dt>查閱日期</dt><dd>${escapeHtml(source.accessedAt ?? "未記錄")}</dd></div>
+          <div><dt>核對日期</dt><dd>${escapeHtml(source.reviewedAt ?? "未記錄")}</dd></div>
           <div><dt>授權核對</dt><dd>${escapeHtml(source.reviewEvidence)}</dd></div>
+          ${activeDerivatives.length ? `<div><dt>使用位置</dt><dd>${activeDerivatives.flatMap((item) => item.placements ?? []).map(escapeHtml).join("；")}</dd></div>` : ""}
           ${activeDerivatives.length ? `<div><dt>修改</dt><dd>${activeDerivatives.map((item) => escapeHtml(item.modified)).join("；")}</dd></div>` : ""}
+          ${activeDerivatives.length ? `<div><dt>衍生檔雜湊</dt><dd>${activeDerivatives.map((item) => `<code>${escapeHtml(item.sha256)}</code>`).join("<br />")}</dd></div>` : ""}
           <div><dt>原始檔</dt><dd><a href="${escapeHtml(source.originalUrl)}" target="_blank" rel="noopener noreferrer">開啟原始圖片<span aria-hidden="true"> ↗</span></a></dd></div>
           <div><dt>原檔雜湊</dt><dd><code>${escapeHtml(source.originalSha256)}</code></dd></div>
         </dl>
@@ -95,16 +98,12 @@ export function renderSourceBadges(sourceIds = []) {
     .join("")}</span>`;
 }
 
-export function renderFact(fact, { compact = false } = {}) {
-  const typeLabel = FACT_TYPE_LABELS[fact.type] ?? "資料";
+export function renderFact(fact, { compact = false, treatment = compact ? "flat" : "card", showCaveat = false } = {}) {
   return `
-    <article class="fact-card${compact ? " fact-card--compact" : ""}">
-      <div class="fact-card__meta">
-        <span class="evidence-type evidence-type--${escapeHtml(fact.type)}">${escapeHtml(typeLabel)}</span>
-        ${renderSourceBadges(fact.sourceIds)}
-      </div>
+    <article class="fact-card${compact ? " fact-card--compact" : ""}" data-authored-unit data-treatment="${escapeHtml(treatment)}">
+      <div class="fact-card__meta">${renderSourceBadges(fact.sourceIds)}</div>
       <p>${escapeHtml(fact.text)}</p>
-      ${fact.caveat ? `<p class="fact-card__caveat"><strong>閱讀限制：</strong>${escapeHtml(fact.caveat)}</p>` : ""}
+      ${showCaveat && fact.caveat ? `<details class="fact-card__note"><summary>補充說明</summary><p>${escapeHtml(fact.caveat)}</p></details>` : ""}
     </article>`;
 }
 
@@ -126,8 +125,9 @@ export function renderMetricMeter(key, label, value) {
 // Chapter 13 is a register, not an essay: every source is grouped by credibility
 // tier inside a collapsed accordion, and each entry names the chapters it backs.
 export function renderSourceEntry(source, chapters = []) {
+  const searchText = [source.id, source.title, source.publisher, source.credibility, source.supports, source.limitations].join(" ").toLocaleLowerCase("zh-Hant-TW");
   return `
-    <article class="source-entry" id="source-${escapeHtml(source.id)}" tabindex="-1">
+    <article class="source-entry" id="source-${escapeHtml(source.id)}" tabindex="-1" data-source-entry data-source-search="${escapeHtml(searchText)}">
       <span class="source-entry__id">${escapeHtml(source.id)}</span>
       <div class="source-entry__main">
         <p class="source-entry__title">
@@ -165,8 +165,12 @@ export function renderSourceLibrary({ tiers, chapterIndex, accessed = "", mediaG
         <p class="source-library__intro">
           共 ${total} 筆文字來源（依可信度分成 ${tiers.length} 組）${mediaCount ? ` 與 ${mediaCount} 筆圖片授權` : ""}。${accessed ? `文字來源查閱日期均為 <time datetime="${escapeHtml(accessed)}">${escapeHtml(accessed)}</time>。` : ""}
         </p>
+        <label class="source-library__filter">搜尋文字來源
+          <input type="search" data-source-filter placeholder="輸入 S ID、發布者或關鍵字" autocomplete="off" />
+        </label>
         <button class="button button--ghost" type="button" data-action="toggle-all-sources" aria-expanded="false">全部展開</button>
       </div>
+      <p class="source-library__filter-status" data-source-filter-status aria-live="polite"></p>
       ${tiers
         .map((tier) =>
           renderSourceGroup({

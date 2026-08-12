@@ -24,6 +24,7 @@ function randomSeed() {
 function captureFocus(root) {
   const active = document.activeElement;
   if (!active || !root.contains(active)) return null;
+  if (active.matches?.("[data-result-panel]")) return { type: "result" };
   if (active.classList.contains("game-panel")) return { type: "panel" };
   if (active instanceof HTMLInputElement) {
     if (active.dataset.allocationInput) return { type: "allocation", key: active.dataset.allocationInput };
@@ -39,6 +40,7 @@ function captureFocus(root) {
 function restoreFocus(root, focus) {
   if (!focus) return false;
   let target = null;
+  if (focus.type === "result") target = root.querySelector("[data-result-panel]");
   if (focus.type === "panel") target = root.querySelector(".game-panel");
   if (focus.type === "allocation") {
     target = [...root.querySelectorAll("[data-allocation-input]")].find((input) => input.dataset.allocationInput === focus.key);
@@ -64,15 +66,24 @@ export function initGame(root) {
   let state = createInitialState(seed);
   let lastRenderedStep = null;
 
-  const update = ({ focusSelector } = {}) => {
+  const update = ({ focusSelector, scrollToTarget = false } = {}) => {
     const previousFocus = captureFocus(root);
+    const metricsOpen = root.querySelector(".game-metrics-details")?.open ?? false;
     renderGame(root, state);
+    const metricsDetails = root.querySelector(".game-metrics-details");
+    if (metricsDetails && metricsOpen) metricsDetails.open = true;
     const explicitTarget = focusSelector ? root.querySelector(focusSelector) : null;
-    if (explicitTarget) explicitTarget.focus();
-    else if (previousFocus) restoreFocus(root, previousFocus);
+    if (explicitTarget) {
+      explicitTarget.focus({ preventScroll: true });
+      if (scrollToTarget) explicitTarget.scrollIntoView({ block: "start" });
+    } else if (previousFocus) restoreFocus(root, previousFocus);
     if (state.step !== lastRenderedStep) {
       const labels = ["作品主題", "製作方式", "資源分配", "突發事件", "企劃結果"];
-      const message = state.step === 5 ? "已產生企劃結果，可以複製分享文字或重新企劃。" : `已進入第 ${state.step} 關：${labels[state.step - 1]}。`;
+      const message = state.step === 5
+        ? "已完成 5／5 個決定。企劃結果已產生，可以帶走企劃句、重新企劃或回到故事路線。"
+        : state.step === 1
+          ? `已進入第 1 關：${labels[0]}。`
+          : `已完成 ${state.step - 1}／5 個決定。已進入第 ${state.step} 關：${labels[state.step - 1]}。`;
       setLiveMessage(root.querySelector("[data-game-status]"), message);
       lastRenderedStep = state.step;
     }
@@ -89,7 +100,7 @@ export function initGame(root) {
       }
       state = setEvent({ ...state, step: 4 });
     } else if (state.step === 4 && state.eventChoiceId) state = { ...state, step: 5 };
-    update({ focusSelector: ".game-panel" });
+    update({ focusSelector: state.step === 5 ? "[data-result-panel]" : ".game-panel", scrollToTarget: true });
   };
 
   root.addEventListener("change", (event) => {
@@ -114,7 +125,7 @@ export function initGame(root) {
     if (action === "next-step") moveNext();
     if (action === "previous-step") {
       state = { ...state, step: Math.max(1, state.step - 1) };
-      update({ focusSelector: ".game-panel" });
+      update({ focusSelector: ".game-panel", scrollToTarget: true });
     }
     if (action === "increment" || action === "decrement") {
       const key = button.dataset.allocation;
@@ -125,7 +136,7 @@ export function initGame(root) {
     }
     if (action === "reset-game") {
       state = createInitialState(state.seed);
-      update({ focusSelector: 'input[name="theme"]' });
+      update({ focusSelector: 'input[name="theme"]', scrollToTarget: true });
     }
     if (action === "copy-result") {
       const textarea = root.querySelector("#share-text");
