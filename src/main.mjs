@@ -2,6 +2,7 @@ import { SONG_CREDITS, CREDIT_ROLE_LABELS } from "./data/credits.mjs";
 import { FACTS_BY_ID } from "./data/facts.mjs";
 import { MEMBERS } from "./data/members.mjs";
 import { ACTIVE_MEDIA, MEDIA, MEDIA_BY_ID, MEDIA_BY_PLACEMENT, MEDIA_SOURCES, RIGHTS_NOTICE } from "./data/media.mjs";
+import { CHAPTER_NARRATIVES, MEMBER_NARRATIVES } from "./data/narrative.mjs";
 import {
   CHAPTERS,
   PHASES,
@@ -19,10 +20,13 @@ import {
   renderMedia,
   renderMediaLicenseCard,
   renderMemberMediaFallback,
+  renderNarrativeParagraphs,
+  renderReflectionPrompt,
   renderSectionSources,
   renderSourceBadges,
   renderSourceGroup,
   renderSourceLibrary,
+  renderStoryBlock,
   setLiveMessage,
 } from "./ui.mjs";
 
@@ -144,13 +148,28 @@ function renderHeroMedia() {
 
 function renderQuickFacts() {
   const items = [
-    ["2018", "六人出道", FACTS_BY_ID.debut],
-    ["2022", "五人回歸", FACTS_BY_ID.hiatus],
-    ["2025", "改名 i-dle", FACTS_BY_ID.rename],
+    {
+      year: "2018",
+      label: "六人出道",
+      fact: FACTS_BY_ID.debut,
+      context: "以六人跨國團體 (G)I-DLE 出道，發行 EP《I Am》。這是故事的起點——但出道不是終點，創作參與從這裡就已經開始。",
+    },
+    {
+      year: "2022",
+      label: "五人回歸",
+      fact: FACTS_BY_ID.hiatus,
+      context: "近一年空窗後，以五人形式回歸，發行《I NEVER DIE》與〈TOMBOY〉。這次回歸被形容為「像重新出道一樣」。",
+    },
+    {
+      year: "2025",
+      label: "改名 i-dle",
+      fact: FACTS_BY_ID.rename,
+      context: "七週年這天改名為小寫 i-dle，移除原團名中的性別標示。改變名字，不等於否定過去。",
+    },
   ];
   select("[data-quick-facts]").innerHTML = items
     .map(
-      ([year, label, fact], index) => `
+      ({ year, label, fact, context }, index) => `
       <li class="quick-fact" data-authored-unit data-treatment="flat">
         <span class="quick-fact__index" aria-hidden="true">0${index + 1}</span>
         <div class="quick-fact__body">
@@ -159,7 +178,8 @@ function renderQuickFacts() {
           ${renderSourceBadges(fact.sourceIds)}
           <details>
             <summary>查看這個時間點</summary>
-            <p>${escapeHtml(fact.text)}</p>
+            <p class="quick-fact__detail">${escapeHtml(fact.text)}</p>
+            <p class="quick-fact__context">${escapeHtml(context)}</p>
           </details>
         </div>
       </li>`,
@@ -193,6 +213,15 @@ function renderResumeCue() {
   });
 }
 
+function renderNarratives() {
+  for (const [chapterId, narrative] of Object.entries(CHAPTER_NARRATIVES)) {
+    const storyRoot = select(`[data-narrative="${chapterId}"]`);
+    if (storyRoot) storyRoot.innerHTML = renderStoryBlock(narrative);
+    const reflectionRoot = select(`[data-reflection="${chapterId}"]`);
+    if (reflectionRoot) reflectionRoot.innerHTML = renderReflectionPrompt(narrative);
+  }
+}
+
 function renderTimeline() {
   const entries = [
     { year: "2018", title: "第一次出道", fact: FACTS_BY_ID.debut },
@@ -222,7 +251,13 @@ function renderTimeline() {
 function renderMembers() {
   const layouts = { miyeon: "ledger", minnie: "split", soyeon: "offset", yuqi: "quote", shuhua: "index" };
   select("[data-members]").innerHTML = `${MEMBERS.map(
-    (member, index) => `
+    (member, index) => {
+      const memberNarrative = MEMBER_NARRATIVES[member.id];
+      const story = memberNarrative?.story ? renderNarrativeParagraphs(memberNarrative.story) : "";
+      const observation = memberNarrative?.observation
+        ? `<p class="member-card__observation" data-authored-unit data-treatment="flat">${escapeHtml(memberNarrative.observation.text)}${memberNarrative.observation.sourceIds?.length ? `<span class="narrative-paragraph__sources">${renderSourceBadges(memberNarrative.observation.sourceIds)}</span>` : ""}</p>`
+        : "";
+      return `
     <article class="member-card member-card--${layouts[member.id] ?? "ledger"}" style="--member-index: ${index}" data-authored-unit data-treatment="card">
       <div class="member-card__tab"><span>0${index + 1}</span><span>${escapeHtml(member.name)}</span></div>
       ${member.mediaId
@@ -235,13 +270,16 @@ function renderMembers() {
         : renderMemberMediaFallback(member)}
       <h3>${escapeHtml(member.name)}</h3>
       ${renderSourceBadges(member.sourceIds)}
+      ${story ? `<div class="member-card__story">${story}</div>` : ""}
       <dl>
         <div><dt>起點</dt><dd>${escapeHtml(member.start)}</dd></div>
         <div><dt>困難</dt><dd>${escapeHtml(member.challenge)}</dd></div>
         <div><dt>帶進團隊的能力</dt><dd>${escapeHtml(member.ability)}</dd></div>
       </dl>
+      ${observation}
       <blockquote>${escapeHtml(member.question)}</blockquote>
-    </article>`,
+    </article>`;
+    },
   ).join("")}`;
 }
 
@@ -471,6 +509,10 @@ function renderSources() {
       <article data-authored-unit data-treatment="flat"><span>C</span><h3>可用但需標限制</h3><p>二手引述或人物整理，要區分原話與媒體詮釋。</p></article>
       <article data-authored-unit data-treatment="flat"><span>×</span><h3>不採用</h3><p>無來源 wiki、匿名爆料、身價網站、家庭傳聞與未公開合約推測。</p></article>
     </div>
+    <aside class="editorial-rule" data-editorial-rule>
+      <p>本站未加署名的章節標題、提問與反思句，均為編輯設計；只有明確標示說話者與來源的內容，才視為成員原話或媒體引述。</p>
+      <p>也就是說：編輯標題與提問、成員原話、媒體引述或轉述、可驗證事實，是四種不同的東西，不要混在一起讀。</p>
+    </aside>
     <p class="method-note">來源標籤會帶你回到下方對應的分類；分類會自動展開。可信度是工作方法，不是替讀者停止思考。</p>`;
 
   select("[data-source-list]").innerHTML = renderSourceLibrary({
@@ -682,6 +724,7 @@ function initialize() {
   renderHeroMedia();
   renderQuickFacts();
   renderResumeCue();
+  renderNarratives();
   renderTimeline();
   renderMembers();
   renderTraineeScenario();

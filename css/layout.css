@@ -156,6 +156,25 @@
   overflow: clip;
 }
 
+/* Dense narrative chapters trim ~25% off the desktop vertical padding so prose
+   and modules build density instead of sitting under big empty headings. The
+   transition/stage chapters (1, 7, 9, 12) keep the larger breathing room. */
+@media (min-width: 768px) {
+  .stage-section[data-chapter="02"],
+  .stage-section[data-chapter="03"],
+  .stage-section[data-chapter="05"],
+  .stage-section[data-chapter="06"],
+  .stage-section[data-chapter="08"],
+  .stage-section[data-chapter="10"],
+  .stage-section[data-chapter="11"] {
+    padding-block: clamp(2.75rem, 6.5vw, 6rem);
+  }
+
+  .stage-section[data-chapter="13"] {
+    padding-block: clamp(2.5rem, 5.5vw, 5rem);
+  }
+}
+
 [data-scene="rehearsal"] h2,
 [data-scene="stage"] h2,
 .site-footer h2,
@@ -190,7 +209,7 @@
 
 [data-scene="rehearsal"] .section-heading > p:last-child,
 [data-scene="stage"] .section-heading > p:last-child {
-  color: var(--color-dark-muted);
+  color: var(--color-dark-text);
 }
 
 .chapter-kicker,
@@ -288,11 +307,6 @@
   max-width: 42rem;
   color: var(--color-ink-soft);
   font-size: clamp(1.05rem, 2.4vw, 1.35rem);
-}
-
-.hero__note {
-  color: var(--color-ink-muted);
-  font-size: var(--text-sm);
 }
 
 .hero__actions,
@@ -573,12 +587,12 @@
 
 .stage-section[data-scene="rehearsal"] :is(.media-credit, .media-credit a, .role-board p, .literacy-grid p),
 .stage-section[data-scene="stage"] :is(.media-credit, .media-credit a, .role-board p, .literacy-grid p) {
-  color: var(--color-dark-muted);
+  color: var(--color-dark-text);
 }
 
 .stage-section[data-scene="rehearsal"] :is(.fact-card p, .fact-card dd, .fact-card dt, .callout p),
 .stage-section[data-scene="stage"] :is(.fact-card p, .fact-card dd, .fact-card dt, .callout p) {
-  color: var(--color-ink-soft);
+  color: var(--color-dark-muted);
 }
 
 .stage-section[data-scene="rehearsal"] :is(.callout strong, .fact-card h3),
@@ -598,7 +612,7 @@
 
 .stage-section[data-scene="rehearsal"] .section-heading > p:last-child,
 .stage-section[data-scene="stage"] .section-heading > p:last-child {
-  color: var(--color-dark-muted);
+  color: var(--color-dark-text);
 }
 
 .stage-section[data-scene="stage"] {
@@ -785,7 +799,6 @@
   .resume-cue { order: 6; }
   .hero__media { order: 7; }
   .quick-facts { order: 8; }
-  .hero__note { order: 9; }
 }
 
 @media (forced-colors: active) {

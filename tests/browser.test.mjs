@@ -234,6 +234,14 @@ test("real-browser load, resource, overflow, and responsive checks cover all req
           return rect.width > 0 && rect.height > 0 && (rect.left < -1 || rect.right > document.documentElement.clientWidth + 1);
         }).map((element) => element.outerHTML.slice(0, 120)));
         assert.deepEqual(clipped, [], `visible controls/headings are clipped at ${width}px`);
+
+        // Narrative expansion: every content chapter (2–12) has a story block, and no
+        // narrative paragraph exceeds a comfortable line length at small viewports.
+        const narrativeCount = await page.locator("[data-narrative] .story-block").count();
+        assert.ok(narrativeCount >= 11, `expected at least 11 narrative story blocks at ${width}px, got ${narrativeCount}`);
+        const longLines = await page.locator(".narrative-paragraph").evaluateAll((paragraphs) => paragraphs.map((p) => Math.round(p.getBoundingClientRect().width)).filter((w) => w > 0));
+        const maxLine = longLines.length ? Math.max(...longLines) : 0;
+        assert.ok(maxLine <= width + 1, `narrative paragraph must not overflow at ${width}px (max ${maxLine}px)`);
       } finally {
         await context.close();
       }
@@ -431,6 +439,15 @@ test("redesign exposes one primary route, four scenes, focus-safe navigation, an
     assert.equal(new Set(factPositions.map(({ left }) => Math.round(left))).size, 1, "390px Hero facts must use one column");
     assert.ok(factPositions[1].top > factPositions[0].top && factPositions[2].top > factPositions[1].top);
 
+    // The hero editor-defence note must not be present in the DOM at all.
+    assert.equal(await page.locator(".hero__note").count(), 0, "hero__note must be removed from the DOM");
+    assert.equal(await page.locator("text=首頁問題是編輯提問，不是成員名言").count(), 0, "hero editor note text must not be rendered");
+
+    // Chapter 13's editorial boundary rule appears exactly once and is visible.
+    assert.equal(await page.locator("[data-editorial-rule]").count(), 1, "editorial rule must appear once");
+    assert.ok(await page.locator("[data-editorial-rule]").first().isVisible(), "editorial rule must be visible");
+    assert.match(await page.locator("[data-editorial-rule]").textContent(), /未加署名的章節標題、提問與反思句/);
+
     const scenes = await page.locator("[data-chapter]").evaluateAll((sections) => [...new Set(sections.map((section) => section.dataset.scene))].sort());
     assert.deepEqual(scenes, ["archive", "creation", "rehearsal", "stage"]);
     const authored = await page.locator('[data-chapter]:not(#sources) [data-authored-unit]').evaluateAll((items) => ({ total: items.length, flat: items.filter((item) => item.dataset.treatment === "flat").length }));
@@ -529,6 +546,47 @@ test("every theme, production choice, event seed, and event-choice path reaches 
     }
   } finally {
     await context.close();
+  }
+});
+
+test("desktop viewports use two-column chapter layout and keep narrative line length bounded", { timeout: 120_000 }, async (t) => {
+  if (skipReason()) return t.skip(skipReason());
+  for (const width of [1024, 1440]) {
+    await t.test(`desktop layout ${width}px`, async () => {
+      const { context, page } = await newPage({ viewport: width });
+      try {
+        await load(page, "?seed=0");
+        // Chapter 02 uses a two-column chapter-layout grid on desktop.
+        const chapterLayout = await page.locator('[data-chapter-layout="who"]').evaluateAll((els) => els.map((el) => {
+          const cols = getComputedStyle(el).gridTemplateColumns.split(" ").filter(Boolean);
+          return { count: cols.length, width: el.getBoundingClientRect().width };
+        }));
+        assert.equal(chapterLayout.length, 1, "chapter 02 should have a chapter-layout container");
+        assert.ok(chapterLayout[0].count >= 2, `chapter 02 should use at least 2 columns at ${width}px, got ${chapterLayout[0].count}`);
+
+        // No narrative paragraph line should exceed a comfortable reading width.
+        const widestNarrative = await page.locator(".narrative-paragraph").evaluateAll((paragraphs) => Math.max(0, ...paragraphs.map((p) => Math.round(p.getBoundingClientRect().width))));
+        assert.ok(widestNarrative <= 44 * 16, `narrative line length should stay <= ~44rem at ${width}px, got ${widestNarrative}px`);
+
+        // Desktop should not rely on CSS order to reorder DOM at any chapter.
+        const orderedChapters = await page.evaluate(() => {
+          const sections = [...document.querySelectorAll(".stage-section[data-chapter]")];
+          return sections.map((section) => {
+            const children = [...section.children].flatMap((c) => [...c.querySelectorAll(":scope > *, :scope .section-shell > *")]);
+            const storyEls = [...section.querySelectorAll(".story-block, .timeline, .member-grid, .credit-grid, .income-map, .role-board, .game-app")];
+            return storyEls.map((el) => Number(getComputedStyle(el).order || 0));
+          });
+        });
+        assert.ok(orderedChapters.every((orders) => orders.every((o) => o === 0)), `no CSS order reordering should be used at ${width}px`);
+
+        // All source badges in narrative content must point at existing source entries.
+        const badgeTargets = await page.locator(".narrative-paragraph .source-badge, .member-card__observation .source-badge").evaluateAll((badges) => badges.map((b) => b.getAttribute("href")).map((href) => ({ href, exists: Boolean(document.querySelector(href)) })));
+        assert.ok(badgeTargets.length > 0, "narrative content should carry source badges");
+        assert.ok(badgeTargets.every((b) => b.exists && /^#source-S/.test(b.href)), "all narrative source badges must resolve to a source entry");
+      } finally {
+        await context.close();
+      }
+    });
   }
 });
 

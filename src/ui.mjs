@@ -111,6 +111,30 @@ export function renderSectionSources(sourceIds = []) {
   return `<div class="inline-sources"><span>對應來源</span>${renderSourceBadges(sourceIds)}</div>`;
 }
 
+// Narrative renderers for the content-expansion pass. Source traceability lives
+// in a small badge row that does not outweigh the paragraph it accompanies; pure
+// editorial reflections carry no badges so they cannot be mistaken for quotes.
+export function renderNarrativeParagraphs(units = [], { treatment = "flat" } = {}) {
+  return units
+    .map((unit) => {
+      const badges = unit.sourceIds?.length ? renderSourceBadges(unit.sourceIds) : "";
+      return `<p class="narrative-paragraph" data-authored-unit data-treatment="${escapeHtml(treatment)}">${escapeHtml(unit.text)}${badges ? `<span class="narrative-paragraph__sources">${badges}</span>` : ""}</p>`;
+    })
+    .join("");
+}
+
+export function renderStoryBlock(narrative) {
+  if (!narrative) return "";
+  const story = narrative.story ? renderNarrativeParagraphs(narrative.story) : "";
+  const explanation = narrative.explanation ? renderNarrativeParagraphs(narrative.explanation) : "";
+  return `<div class="story-block">${story}${explanation ? `<div class="story-block__explanation">${explanation}</div>` : ""}</div>`;
+}
+
+export function renderReflectionPrompt(narrative) {
+  if (!narrative?.reflection?.text) return "";
+  return `<aside class="reflection-prompt" data-authored-unit data-treatment="card"><p><span class="reflection-prompt__mark" aria-hidden="true">？</span>${escapeHtml(narrative.reflection.text)}</p></aside>`;
+}
+
 export function renderMetricMeter(key, label, value) {
   const safeValue = Math.max(0, Math.min(100, Number(value) || 0));
   const labelId = `${key}-metric-label`;

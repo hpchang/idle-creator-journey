@@ -94,20 +94,22 @@
   align-items: center;
   justify-content: center;
   padding-inline: 0.4rem;
-  border: 1px solid var(--color-plum);
+  border: 1px solid var(--color-paper-line);
   border-radius: var(--radius-pill);
-  background: var(--color-purple-soft);
-  color: var(--color-plum-deep);
+  background: transparent;
+  color: var(--color-ink-muted);
   font-family: var(--font-mono);
-  font-size: 0.68rem;
+  font-size: 0.65rem;
   font-weight: 700;
   line-height: 1;
   text-decoration: none;
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
 }
 
 .source-badge:hover {
-  background: var(--color-plum);
-  color: var(--color-dark-text);
+  background: var(--color-purple-soft);
+  border-color: var(--color-plum);
+  color: var(--color-plum-deep);
 }
 
 .inline-sources {
@@ -168,6 +170,18 @@
   color: var(--color-ink-soft);
   font-size: var(--text-xs);
   line-height: 1.55;
+}
+
+.quick-fact__detail {
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.quick-fact__context {
+  margin-top: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 1px dashed var(--color-paper-line);
+  color: var(--color-ink-soft);
 }
 
 .quick-fact .source-badges {
@@ -1517,6 +1531,200 @@
 .source-entry[hidden],
 .source-group[hidden] {
   display: none;
+}
+
+/* Narrative content from the content-expansion pass. Paragraphs stay short and
+   phone-readable; the source badge row trails the text without outweighing it.
+   Reflection prompts are editorial, so they carry no badges. */
+.story-block {
+  display: grid;
+  gap: var(--space-4);
+  max-width: 44rem;
+}
+
+.story-block__explanation {
+  display: grid;
+  gap: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-paper-line);
+}
+
+.narrative-paragraph {
+  max-width: 44rem;
+  margin: 0;
+  color: var(--color-ink-soft);
+  font-size: clamp(1rem, 1.6vw, 1.12rem);
+  line-height: 1.75;
+}
+
+.narrative-paragraph__sources {
+  display: inline-flex;
+  flex-wrap: wrap;
+  margin-left: 0.35em;
+  vertical-align: baseline;
+}
+
+[data-scene="rehearsal"] .narrative-paragraph,
+[data-scene="stage"] .narrative-paragraph {
+  color: var(--color-dark-text);
+}
+
+[data-scene="creation"] .narrative-paragraph {
+  color: var(--color-ink-soft);
+}
+
+[data-scene="rehearsal"] .story-block__explanation,
+[data-scene="stage"] .story-block__explanation {
+  border-top-color: var(--color-dark-line);
+}
+
+/* Source badges must stay legible on dark rehearsal/stage backgrounds. */
+[data-scene="rehearsal"] .source-badge,
+[data-scene="stage"] .source-badge {
+  border-color: var(--color-dark-line);
+  color: var(--color-dark-muted);
+}
+
+[data-scene="rehearsal"] .source-badge:hover,
+[data-scene="stage"] .source-badge:hover {
+  background: rgb(255 253 249 / 0.16);
+  border-color: var(--color-focus-dark);
+  color: var(--color-dark-text);
+}
+
+[data-scene="rehearsal"] .member-card__observation,
+[data-scene="stage"] .member-card__observation {
+  color: var(--color-dark-muted);
+}
+
+.reflection-prompt {
+  display: grid;
+  max-width: 44rem;
+  margin-top: var(--space-4);
+  padding: var(--space-5);
+  border: var(--border);
+  border-left: 4px solid var(--color-brick);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  background: var(--color-paper-raised);
+  box-shadow: var(--shadow-paper);
+}
+
+.reflection-prompt p {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-3);
+  align-items: start;
+  margin: 0;
+  color: var(--color-ink);
+  font-size: clamp(1rem, 1.6vw, 1.1rem);
+  line-height: 1.7;
+}
+
+.reflection-prompt__mark {
+  display: grid;
+  width: 1.75rem;
+  height: 1.75rem;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--color-brick);
+  color: var(--color-paper-raised);
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+[data-scene="rehearsal"] .reflection-prompt,
+[data-scene="stage"] .reflection-prompt {
+  border-color: var(--color-dark-line);
+  border-left-color: var(--color-focus-dark);
+  background: rgb(255 253 249 / 0.86);
+}
+
+[data-scene="rehearsal"] .reflection-prompt__mark,
+[data-scene="stage"] .reflection-prompt__mark {
+  background: var(--color-focus-dark);
+}
+
+[data-scene="rehearsal"] .reflection-prompt p,
+[data-scene="stage"] .reflection-prompt p,
+[data-scene="creation"] .reflection-prompt p {
+  color: var(--color-ink);
+}
+
+.member-card__story,
+.member-card__observation {
+  max-width: none;
+  color: var(--color-ink-soft);
+  font-size: var(--text-sm);
+  line-height: 1.7;
+}
+
+.member-card__story {
+  margin-top: var(--space-3);
+}
+
+.member-card__story .narrative-paragraph {
+  font-size: var(--text-sm);
+  color: var(--color-ink-soft);
+}
+
+.member-card__observation {
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px dashed var(--color-paper-line);
+}
+
+.member-card__observation .narrative-paragraph__sources {
+  margin-left: 0.35em;
+}
+
+/* Chapter 13 editorial boundary rule — stated once, not scattered per chapter. */
+.editorial-rule {
+  max-width: 48rem;
+  margin: var(--space-5) 0 0;
+  padding: var(--space-4) var(--space-5);
+  border-left: 4px solid var(--color-plum);
+  background: var(--color-purple-soft);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.editorial-rule p {
+  margin: 0;
+  color: var(--color-plum-deep);
+  font-size: var(--text-sm);
+  line-height: 1.7;
+}
+
+.editorial-rule p + p {
+  margin-top: var(--space-2);
+}
+
+/* Two-column desktop layout for chapters where a narrative column pairs with an
+   aside (timeline, media, credits, interaction). Phone keeps natural DOM order. */
+.chapter-layout {
+  display: grid;
+  gap: var(--space-6);
+}
+
+.chapter-layout__main {
+  min-width: 0;
+}
+
+.chapter-layout__aside {
+  min-width: 0;
+}
+
+@media (min-width: 1024px) {
+  .chapter-layout {
+    grid-template-columns: minmax(0, 6fr) minmax(0, 4fr);
+    align-items: start;
+    gap: clamp(2rem, 4vw, 4rem);
+  }
+
+  /* On desktop, line-length stays bounded inside each column. */
+  .chapter-layout__main .narrative-paragraph,
+  .chapter-layout__main .story-block {
+    max-width: 40rem;
+  }
 }
 
 @media (forced-colors: active) {

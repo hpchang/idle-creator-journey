@@ -10,6 +10,7 @@ import { FACTS, FACTS_BY_ID } from "../src/data/facts.mjs";
 import { GAME_CONFIG, GAME_EVENTS, GAME_THEMES, PRODUCTION_CHOICES } from "../src/data/game.mjs";
 import { ACTIVE_MEDIA, MEDIA, MEDIA_BY_ID, MEDIA_BY_PLACEMENT, MEDIA_SOURCE_BY_ID, MEDIA_SOURCES } from "../src/data/media.mjs";
 import { MEMBERS } from "../src/data/members.mjs";
+import { CHAPTER_NARRATIVES, MEMBER_NARRATIVES } from "../src/data/narrative.mjs";
 import { CHAPTERS, PHASES, SITE_META, TAKEAWAYS, TRAINEE_SCENARIO } from "../src/data/site.mjs";
 import { SOURCE_LIST, SOURCES_BY_ID } from "../src/data/sources.mjs";
 
@@ -226,5 +227,71 @@ test("all content source references are attached to non-empty, traceable records
   for (const event of GAME_EVENTS) {
     assert.ok(event.id && event.title && event.description);
     for (const choice of event.choices) assert.ok(choice.id && choice.label);
+  }
+});
+
+test("the content-expansion pass removes the hero editor note and adds one centralized editorial rule", () => {
+  // Hero must no longer show the editor-defence note to readers.
+  assert.doesNotMatch(html, /首頁問題是編輯提問，不是成員名言/);
+  assert.doesNotMatch(html, /class="hero__note"/);
+
+  // The centralised editorial boundary lives in chapter 13's method block and is rendered once.
+  assert.match(mainScript, /data-editorial-rule/);
+  assert.match(mainScript, /未加署名的章節標題、提問與反思句/);
+  const ruleMatches = [...mainScript.matchAll(/未加署名的章節標題、提問與反思句/g)];
+  assert.equal(ruleMatches.length, 1, "the editorial boundary rule must appear exactly once in source");
+});
+
+test("narrative data is source-traceable and editorial reflections are never mistaken for member quotes", () => {
+  const narrativeChapterIds = Object.keys(CHAPTER_NARRATIVES);
+  // Chapters 2–12 must each carry at least one main narrative unit.
+  const expectedNarrativeChapters = CHAPTERS.filter((chapter) => chapter.number >= "02" && chapter.number <= "12").map((chapter) => chapter.id);
+  for (const id of expectedNarrativeChapters) {
+    assert.ok(narrativeChapterIds.includes(id), `chapter ${id} is missing a narrative entry`);
+  }
+
+  for (const narrative of Object.values(CHAPTER_NARRATIVES)) {
+    for (const unit of [...(narrative.story ?? []), ...(narrative.explanation ?? [])]) {
+      assert.ok(unit.text && unit.text.length > 0, "narrative unit must have text");
+      if (unit.editorial === true) {
+        assert.ok(!unit.sourceIds || unit.sourceIds.length === 0, "editorial narrative unit must not carry sourceIds");
+      } else {
+        assert.ok(unit.sourceIds && unit.sourceIds.length > 0, "non-editorial narrative unit must carry sourceIds");
+        for (const id of unit.sourceIds) {
+          assert.ok(allKnownSourceIds.has(id), `narrative references unknown source ${id}`);
+        }
+      }
+    }
+    if (narrative.reflection) {
+      // Reflections are editorial prompts — they must never look like attributed member quotes.
+      assert.equal(narrative.reflection.editorial, true, "reflection must be flagged editorial");
+      assert.ok(!narrative.reflection.sourceIds || narrative.reflection.sourceIds.length === 0, "reflection must not carry sourceIds");
+      // Reflections must not be framed as direct attributed speech.
+      assert.doesNotMatch(narrative.reflection.text, /成員.*表示|Soyeon.*說[：:]/);
+    }
+  }
+
+  // Member narrative depth is conservative: no new biographical claim beyond existing sources.
+  for (const member of MEMBERS) {
+    const memberNarrative = MEMBER_NARRATIVES[member.id];
+    assert.ok(memberNarrative, `${member.id} needs a member narrative entry`);
+    for (const unit of [...(memberNarrative.story ?? []), ...(memberNarrative.observation ? [memberNarrative.observation] : [])]) {
+      if (unit.editorial === true) {
+        assert.ok(!unit.sourceIds || unit.sourceIds.length === 0, `${member.id} editorial unit must not carry sourceIds`);
+      } else if (unit.sourceIds) {
+        for (const id of unit.sourceIds) assert.ok(allKnownSourceIds.has(id), `${member.id} narrative references unknown source ${id}`);
+      }
+    }
+  }
+});
+
+test("priority chapters have substantive narrative expansion without filler repetition", () => {
+  const priorityChapters = ["paths", "restart", "studio", "music-business"];
+  for (const id of priorityChapters) {
+    const narrative = CHAPTER_NARRATIVES[id];
+    const allText = [...(narrative.story ?? []), ...(narrative.explanation ?? [])].map((unit) => unit.text).join("");
+    assert.ok(allText.length >= 120, `priority chapter ${id} should have substantive narrative text (got ${allText.length} chars)`);
+    // Each priority chapter should have at least two explanation/understanding units (the 理解層).
+    assert.ok((narrative.explanation ?? []).length >= 2, `priority chapter ${id} should have at least 2 explanation units`);
   }
 });
