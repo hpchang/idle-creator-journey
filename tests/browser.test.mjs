@@ -354,12 +354,14 @@ test("keyboard-only navigation and game flow preserve focus, source links, and c
     assert.equal(await page.locator(".media-license-card").count(), MEDIA_SOURCES.length);
     const mediaLinks = await page.locator(".media-credit a, .media-license-card a").evaluateAll((links) => links.map((link) => ({
       href: link.href,
+      origin: new URL(link.href).origin,
       target: link.target,
       rel: link.rel,
       hash: link.hash,
       targetExists: link.hash ? Boolean(document.querySelector(link.hash)) : null,
     })));
-    const externalMediaLinks = mediaLinks.filter((link) => /^https:\/\//.test(link.href));
+    const pageOrigin = await page.evaluate(() => location.origin);
+    const externalMediaLinks = mediaLinks.filter((link) => link.origin !== pageOrigin && /^https:\/\//.test(link.href));
     const internalMediaLinks = mediaLinks.filter((link) => /^#media-license-/.test(link.hash));
     assert.ok(externalMediaLinks.length >= EXPECTED_MEDIA_COUNT * 2 + MEDIA_SOURCES.length * 2);
     assert.ok(externalMediaLinks.every((link) => link.target === "_blank" && /noopener/.test(link.rel) && /noreferrer/.test(link.rel)));
