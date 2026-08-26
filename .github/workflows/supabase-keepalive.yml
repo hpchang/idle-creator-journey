@@ -1,0 +1,33 @@
+name: Supabase keep-alive
+
+# Free-tier Supabase 專案連續 7 天無活動會自動暫停。這個 workflow 每 5 天
+# 呼叫一次唯讀的 read_hits RPC（不會累加計數），維持 project 活動門檻。
+# 這不是 Pages 部署 workflow；部署仍由 GitHub Pages 的 main/root classic branch 提供。
+
+on:
+  schedule:
+    # 每 5 天 UTC 07:17（約台灣 15:17），避開 :00 分整
+    - cron: "17 7 */5 * *"
+  workflow_dispatch: # 允許手動觸發，方便除錯
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping read_hits
+        run: |
+          set -euo pipefail
+          url="https://eaawlrtrxwyurcfnekat.supabase.co/rest/v1/rpc/read_hits"
+          key="sb_publishable_zS96EY5Uddhaq06hjt04sQ_E8WarUjc"
+          code=$(curl -s -o /tmp/resp -w "%{http_code}" --max-time 20 \
+            -X POST "$url" \
+            -H "apikey: $key" \
+            -H "Authorization: Bearer $key" \
+            -H "Content-Type: application/json" \
+            -d '{"page_slug":"idle-creator-journey"}')
+          echo "HTTP $code"
+          echo "body: $(cat /tmp/resp)"
+          if [ "$code" != "200" ]; then
+            echo "::warning::read_hits 回傳 $code，Supabase 可能被暫停或刪除，需到 dashboard 確認"
+            exit 1
+          fi

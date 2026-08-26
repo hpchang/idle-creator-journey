@@ -25,9 +25,11 @@ Custom domain: 帳號層級 www.hpchang.com
 專案不使用：
 
 - `gh-pages` 分支
-- repository-owned GitHub Actions workflow
+- repository-owned Pages Actions workflow（部署專用）
 - project-level `CNAME`
 - Cloudflare Pages 重複部署
+
+專案使用的唯一 GitHub Actions workflow 是 `.github/workflows/supabase-keepalive.yml`——它不是部署 workflow，而是定時喚醒共享 Supabase Free tier project，避免 7 天無活動自動暫停。
 
 站內 CSS、JavaScript 與圖片使用相對路徑，因此可在 `/idle-creator-journey/` 子路徑下運作。正式 canonical、`og:url`、Open Graph 圖片及 Article structured data URL 位於 `index.html`。
 
