@@ -14,6 +14,8 @@ description: 依據已核實的專案 brief 與來源，規劃、實作及驗證
 1. `/Users/hpchang/Documents/claude/MyProjects/idle/CLAUDE.md`
 2. `/Users/hpchang/Documents/claude/MyProjects/idle/docs/PROJECT_BRIEF.md`
 3. `/Users/hpchang/Documents/claude/MyProjects/idle/docs/SOURCE_REGISTER.md`
+4. `/Users/hpchang/Documents/claude/MyProjects/idle/docs/MEDIA_REGISTER.md`
+5. 若執行內容擴寫任務：`/Users/hpchang/Documents/claude/MyProjects/idle/docs/CONTENT_EXPANSION_HANDOFF.md`
 
 不可只根據一般模型知識撰寫團體事實。
 
@@ -107,6 +109,49 @@ description: 依據已核實的專案 brief 與來源，規劃、實作及驗證
 - 完整玩完遊戲所有主要路線。
 - 檢查鍵盤操作、focus、 reduced-motion、來源連結及分享卡。
 - 檢查 console、404、overflow、CLS 與載入速度。
+
+### 8. 內容擴寫（當任務為擴充章節正文時）
+
+此階段在 UI/UX 改版完成後進行，規格見 `docs/CONTENT_EXPANSION_HANDOFF.md`。
+
+- **不可 reset 或覆蓋既有 UI/UX 改版**，只在現狀上增量。
+- 章節敘事資料放 `src/data/narrative.mjs`，匯出 `CHAPTER_NARRATIVES`（第 2-12 章）與 `MEMBER_NARRATIVES`。每章三層：`story`、`explanation`、`reflection`。
+- 每個含可驗證敘述的單位攜帶 `sourceIds`（必須存在於 SOURCE_REGISTER）；純編輯提問/反思用 `editorial: true` 且不帶 `sourceIds`。
+- 渲染器在 `src/ui.mjs`：`renderNarrativeParagraphs`、`renderStoryBlock`、`renderReflectionPrompt`。HTML hook 用 `data-narrature`/`data-reflection`。
+- 優先擴寫章節：第 3、7、8、10 章，explanation 層 ≥2 個單元。
+- 移除 Hero 的編輯防禦提示（`.hero__note`），把編輯界線集中說明於第 13 章一次（`data-editorial-rule`）。
+- 桌面 1024px+：用 `chapter-layout` 雙欄（6fr/4fr），主敘事欄行寬 ≤40rem；手機維持單欄 DOM 順序，不用 CSS `order`。
+- 密集章節（2、3、5、6、8、10、11）桌面 padding 減約 25%；轉場章節（1、7、9、12）保留較大留白。
+- 不新增/修改圖片；不破壞遊戲規則、來源搜尋、TOC、resume、`＋`/`－`/Arrow 鍵穩定性。
+- 完成定義見 handoff §11，包含 `npm test`、`npm run test:browser`、axe 六 viewport、真實瀏覽器 390/1440px 逐章驗收。
+
+### 9. 視覺對比重點（深色場景）
+
+使用者明確反映過：**深色場景（rehearsal 深紫、stage 近黑）下淡白色文字對比不足。**
+
+- 深色 `data-scene` 場景的所有文字（副標題、敘事段落、fact-card、badge）必須用 `--color-dark-text`(#fdf7f8) 或 `--color-dark-muted`(#e0d3dd)。
+- **不可用 `--color-ink-soft`(#4d4051)**——它在深紫底上幾乎不可讀（這是踩過的 bug）。
+- source badge 預設透明背景、淡邊框、低調文字，hover 才浮現紫色；不應壓過正文。
+- 深色場景裡 badge 也要用淺邊框+淺文字維持可讀。
+
+### 10. 部署與正式站驗收
+
+- 測試：`npm test`（21）、`npm run test:browser`（23，含 axe WCAG A/AA 六 viewport）。
+- 正式站驗收：`IDLE_BASE_URL=https://www.hpchang.com/idle-creator-journey npm run test:browser`。
+- 部署：`git push origin main` → GitHub Pages（`main`/`/` root）自動部署，無 build 步驟。
+- 推送後用 `gh api repos/hpchang/idle-creator-journey/pages` 與 `.../pages/builds/latest` 確認 source=`main`/`/`、status=`built`、commit 符合；正式 HTTPS 回傳 200；metadata 正確。
+- **push `.github/workflows/` 檔需 `workflow` scope**：OAuth token 沒有 `workflow` scope 會被拒。修復：`gh auth refresh -h github.com -s workflow` 後重 push。
+- **已知陷阱**：瀏覽器測試的「外部連結應有 noopener」檢查，不能用 `/^https:\/\//` 判斷外部連結（HTTPS 正式站上同源 hash 連結會被誤判）。用跨來源判斷（`link.origin !== location.origin`）。
+
+### 11. Supabase 計數器與 keep-alive
+
+- 瀏覽計數器在 `src/counter.mjs`：publishable key 呼叫共享 Supabase 的 `read_hits`/`bump_hits` RPC，slug = `idle-creator-journey`。失敗靜默，不影響頁面。
+- **Free tier 7 天無活動自動暫停**：暫停時 `.supabase.co` 子域 DNS 被移除（症狀 NXDOMAIN），計數器靜默失敗、頁面不顯示觀看次數。瀏覽器端請求可能不足以維持活動門檻。
+- 診斷：`nslookup <project>.supabase.co 8.8.8.8` 看是否 NXDOMAIN；唯讀測 `curl read_hits` 看是否 HTTP 200（**不要測 `bump_hits`，會累加計數**）。
+- 暫停時修復：到 Supabase dashboard 手動重啟 project，DNS 與 RPC 會立即恢復，計數接續，不需改程式碼。
+- **Keep-alive（已實作）**：`.github/workflows/supabase-keepalive.yml` 每 5 天 UTC 07:17 用唯讀 `read_hits` 喚醒 project。這是 repo 唯一允許的 Actions workflow 例外（不是部署 workflow；CLAUDE.md/DEPLOY.md 已限縮規則）。
+- 手動觸發/檢查：`gh workflow run supabase-keepalive.yml --repo hpchang/idle-creator-journey`，再 `gh run list --workflow supabase-keepalive.yml --limit 3`。run 失敗（紅色叉號）表示 Supabase 又被暫停。
+- 長期最省心：升級 Supabase Pro（$25/月）不會因 inactivity 暫停，可移除 keep-alive。
 
 ## 禁止事項
 
