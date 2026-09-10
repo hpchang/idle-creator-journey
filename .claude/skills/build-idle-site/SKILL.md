@@ -149,7 +149,7 @@ description: 依據已核實的專案 brief 與來源，規劃、實作及驗證
 - **Free tier 7 天無活動自動暫停**：暫停時 `.supabase.co` 子域 DNS 被移除（症狀 NXDOMAIN），計數器靜默失敗、頁面不顯示觀看次數。瀏覽器端請求可能不足以維持活動門檻。
 - 診斷：`nslookup <project>.supabase.co 8.8.8.8` 看是否 NXDOMAIN；唯讀測 `curl read_hits` 看是否 HTTP 200（**不要測 `bump_hits`，會累加計數**）。
 - 暫停時修復：到 Supabase dashboard 手動重啟 project，DNS 與 RPC 會立即恢復，計數接續，不需改程式碼。
-- **Keep-alive（已實作）**：`.github/workflows/supabase-keepalive.yml` 每 5 天 UTC 07:17 用唯讀 `read_hits` 喚醒 project。這是 repo 唯一允許的 Actions workflow 例外（不是部署 workflow；CLAUDE.md/DEPLOY.md 已限縮規則）。
+- **Keep-alive（已實作）**：`.github/workflows/supabase-keepalive.yml` 約每 2 天 UTC 07:17 用唯讀 `read_hits` 喚醒所有網站共用的 project；實際排程以 workflow 檔案為準。這是 repo 唯一允許的 Actions workflow 例外（不是部署 workflow；CLAUDE.md/DEPLOY.md 已限縮規則）。
 - 手動觸發/檢查：`gh workflow run supabase-keepalive.yml --repo hpchang/idle-creator-journey`，再 `gh run list --workflow supabase-keepalive.yml --limit 3`。run 失敗（紅色叉號）表示 Supabase 又被暫停。
 - 長期最省心：升級 Supabase Pro（$25/月）不會因 inactivity 暫停，可移除 keep-alive。
 

@@ -95,7 +95,7 @@
 - 正式網站：`https://www.hpchang.com/idle-creator-journey/`。
 - GitHub Pages 使用 `main` 分支、`/ (root)` 的 classic/legacy branch deployment。
 - 不建立 `gh-pages`、project-level `CNAME` 或 repository-owned Pages Actions workflow。
-- 唯一例外是 `.github/workflows/supabase-keepalive.yml`：它不是部署 workflow，而是定時喚醒共享 Supabase Free tier project（每 5 天呼叫唯讀 `read_hits`，避免 7 天無活動自動暫停）。不得用於部署或任何寫入計數的用途。
+- 唯一例外是 `.github/workflows/supabase-keepalive.yml`：它不是部署 workflow，而是約每 2 天呼叫唯讀 `read_hits`，定時喚醒所有網站共用的 Supabase Free tier project。實際排程以 workflow 檔案為準；不得用於部署或任何寫入計數的用途。
 - 站內資源維持相對路徑，確保可在 `/idle-creator-journey/` 子路徑運作。
 - `npm run serve` 只供本機預覽；部署與驗證流程見 `DEPLOY.md`。
 
