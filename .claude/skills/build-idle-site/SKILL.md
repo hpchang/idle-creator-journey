@@ -136,22 +136,17 @@ description: 依據已核實的專案 brief 與來源，規劃、實作及驗證
 
 ### 10. 部署與正式站驗收
 
-- 測試：`npm test`（21）、`npm run test:browser`（23，含 axe WCAG A/AA 六 viewport）。
+- 測試：`npm test`（21）、`npm run test:browser`（25，含 axe WCAG A/AA 六 viewport）。
 - 正式站驗收：`IDLE_BASE_URL=https://www.hpchang.com/idle-creator-journey npm run test:browser`。
 - 部署：`git push origin main` → GitHub Pages（`main`/`/` root）自動部署，無 build 步驟。
 - 推送後用 `gh api repos/hpchang/idle-creator-journey/pages` 與 `.../pages/builds/latest` 確認 source=`main`/`/`、status=`built`、commit 符合；正式 HTTPS 回傳 200；metadata 正確。
-- **push `.github/workflows/` 檔需 `workflow` scope**：OAuth token 沒有 `workflow` scope 會被拒。修復：`gh auth refresh -h github.com -s workflow` 後重 push。
 - **已知陷阱**：瀏覽器測試的「外部連結應有 noopener」檢查，不能用 `/^https:\/\//` 判斷外部連結（HTTPS 正式站上同源 hash 連結會被誤判）。用跨來源判斷（`link.origin !== location.origin`）。
 
-### 11. Supabase 計數器與 keep-alive
+### 11. 瀏覽計數器
 
-- 瀏覽計數器在 `src/counter.mjs`：publishable key 呼叫共享 Supabase 的 `read_hits`/`bump_hits` RPC，slug = `idle-creator-journey`。失敗靜默，不影響頁面。
-- **Free tier 7 天無活動自動暫停**：暫停時 `.supabase.co` 子域 DNS 被移除（症狀 NXDOMAIN），計數器靜默失敗、頁面不顯示觀看次數。瀏覽器端請求可能不足以維持活動門檻。
-- 診斷：`nslookup <project>.supabase.co 8.8.8.8` 看是否 NXDOMAIN；唯讀測 `curl read_hits` 看是否 HTTP 200（**不要測 `bump_hits`，會累加計數**）。
-- 暫停時修復：到 Supabase dashboard 手動重啟 project，DNS 與 RPC 會立即恢復，計數接續，不需改程式碼。
-- **Keep-alive（已實作）**：`.github/workflows/supabase-keepalive.yml` 約每 2 天 UTC 07:17 用唯讀 `read_hits` 喚醒所有網站共用的 project；實際排程以 workflow 檔案為準。這是 repo 唯一允許的 Actions workflow 例外（不是部署 workflow；CLAUDE.md/DEPLOY.md 已限縮規則）。
-- 手動觸發/檢查：`gh workflow run supabase-keepalive.yml --repo hpchang/idle-creator-journey`，再 `gh run list --workflow supabase-keepalive.yml --limit 3`。run 失敗（紅色叉號）表示 Supabase 又被暫停。
-- 長期最省心：升級 Supabase Pro（$25/月）不會因 inactivity 暫停，可移除 keep-alive。
+- 計數器在 `src/counter.mjs`：`GET <BASE>/<slug>` 讀取、`POST <BASE>/<slug>` 累加，兩者都回 `{"count":N}`，slug = `idle-creator-journey`，沒有金鑰，失敗靜默不影響頁面。
+- 契約、部署與新站上線流程見 `/Users/hpchang/Documents/claude/MyProjects/VIEWS_COUNTER_STANDARD.md`（伺服器端在獨立的 Cloudflare Worker 專案）。
+- 本 repo 不使用任何 GitHub Actions workflow，計數器也不需要 keep-alive。
 
 ## 禁止事項
 

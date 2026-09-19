@@ -86,16 +86,16 @@
 
 - 使用語意 HTML、原生 CSS 與 Vanilla JavaScript ES modules；無 production build 步驟。
 - 無應用程式後端、登入、CMS 或 runtime framework；網站本體維持靜態部署。
-- 唯一外部資料服務是 `src/counter.mjs` 使用的共用 Supabase 瀏覽計數 RPC；publishable key 可公開，安全性依賴資料庫 RLS、RPC 權限與 slug 白名單，不得加入 service-role key 或資料庫密碼。
+- 唯一外部資料服務是 `src/counter.mjs` 呼叫的自有 Cloudflare Worker 瀏覽計數 API：`GET <BASE>/<slug>` 讀取、`POST <BASE>/<slug>` 累加，兩者都回 `{"count":N}`，資料存放在 Cloudflare KV。沒有金鑰、沒有 publishable key；可存取的 slug 由 Worker 端的白名單決定，repository 不得包含任何憑證或密鑰。
 - 計數器失敗必須靜默，不可阻擋主要內容與互動。
 - 事實內容、來源、歌曲 credit 與遊戲規則集中在 `src/data/`。
 - 遊戲狀態只存在瀏覽器，重新整理可重來。
-- 不加入不必要的分析追蹤或第三方 SDK。
+- 不加入不必要的分析追蹤或第三方 SDK；唯一例外是瀏覽計數器，它是自有服務，不是第三方追蹤。
 - GitHub repository：`https://github.com/hpchang/idle-creator-journey`。
 - 正式網站：`https://www.hpchang.com/idle-creator-journey/`。
 - GitHub Pages 使用 `main` 分支、`/ (root)` 的 classic/legacy branch deployment。
 - 不建立 `gh-pages`、project-level `CNAME` 或 repository-owned Pages Actions workflow。
-- 唯一例外是 `.github/workflows/supabase-keepalive.yml`：它不是部署 workflow，而是約每 2 天呼叫唯讀 `read_hits`，定時喚醒所有網站共用的 Supabase Free tier project。實際排程以 workflow 檔案為準；不得用於部署或任何寫入計數的用途。
+- 本 repository 不使用任何 GitHub Actions workflow，也不需要：計數器由 Cloudflare Worker 獨立運作，沒有需要定時喚醒的服務。
 - 站內資源維持相對路徑，確保可在 `/idle-creator-journey/` 子路徑運作。
 - `npm run serve` 只供本機預覽；部署與驗證流程見 `DEPLOY.md`。
 

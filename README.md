@@ -27,7 +27,7 @@
 
 - 語意 HTML、原生 CSS、Vanilla JavaScript ES modules
 - 無應用程式後端、登入、CMS 或 runtime framework；網站本體維持靜態部署
-- `src/counter.mjs` 只透過受限 Supabase RPC 顯示匿名瀏覽次數；失敗時不影響網站功能
+- `src/counter.mjs` 只透過自有的 Cloudflare Worker 計數 API 顯示匿名瀏覽次數；失敗時不影響網站功能
 - 內容、來源、歌曲 credit 與遊戲規則集中在 `src/data/`
 - 遊戲計算集中在 `src/game/model.mjs`，可用 `node:test` 獨立驗證
 - 人物圖片只使用已核對 Commons review evidence 的 CC 授權素材，原檔、衍生檔與授權分別登錄於 `src/data/media.mjs` 與 `docs/MEDIA_REGISTER.md`

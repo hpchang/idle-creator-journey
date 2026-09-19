@@ -7,9 +7,9 @@
 
 ## 部署設定
 
-本網站是可直接提供的靜態 HTML、CSS 與 Vanilla JavaScript ES modules，沒有 production build 步驟。`src/counter.mjs` 會從瀏覽器呼叫共用 Supabase RPC 顯示匿名瀏覽次數，但它不是 GitHub Pages 的部署依賴；請求失敗時網站仍可完整使用。
+本網站是可直接提供的靜態 HTML、CSS 與 Vanilla JavaScript ES modules，沒有 production build 步驟。`src/counter.mjs` 會從瀏覽器呼叫自有的 Cloudflare Worker 計數 API 顯示匿名瀏覽次數，但它不是 GitHub Pages 的部署依賴；請求失敗時網站仍可完整使用。
 
-計數器只使用 publishable key，資料表由 RLS 隔離，前端只能呼叫已授權且含 slug 白名單的 `read_hits`／`bump_hits` RPC。不得把 service-role key 或資料庫密碼加入 repository。
+計數器完全不用金鑰：`GET <BASE>/<slug>` 讀取、`POST <BASE>/<slug>` 累加，兩者都回 `{"count":N}`。可存取的 slug 白名單與計數資料都存在 Cloudflare Worker 端（Cloudflare KV），repository 不得包含任何憑證或密鑰。
 
 GitHub Pages 設定：
 
@@ -29,7 +29,7 @@ Custom domain: 帳號層級 www.hpchang.com
 - project-level `CNAME`
 - Cloudflare Pages 重複部署
 
-專案使用的唯一 GitHub Actions workflow 是 `.github/workflows/supabase-keepalive.yml`——它不是部署 workflow，而是定時喚醒共享 Supabase Free tier project，避免 7 天無活動自動暫停。
+本專案不使用任何 GitHub Actions workflow，也不需要：計數器由 Cloudflare Worker 獨立運作，沒有需要定時喚醒的服務。
 
 站內 CSS、JavaScript 與圖片使用相對路徑，因此可在 `/idle-creator-journey/` 子路徑下運作。正式 canonical、`og:url`、Open Graph 圖片及 Article structured data URL 位於 `index.html`。
 

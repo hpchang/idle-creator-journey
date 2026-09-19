@@ -568,7 +568,7 @@ npm run test:browser
 - `src/game/model.mjs`
 - 回歸遊戲規則資料與 scoring 邏輯
 - 現有圖片檔
-- Supabase counter 安全設定
+- 瀏覽計數器的伺服器端契約（現位於 Cloudflare Worker 專案，不在本 repo）
 - GitHub Pages 部署模式
 
 若實作需要改動以上不應修改項目，先停止並重新確認設計，而不是直接擴大範圍。

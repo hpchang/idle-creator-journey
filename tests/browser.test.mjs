@@ -94,8 +94,30 @@ async function launchRealChrome() {
   }
 }
 
-async function newPage({ viewport, clipboardDenied = false } = {}) {
+/* 計數器 host 攔截。每個 viewport 都是全新 context，sessionStorage 因此
+   每次都是空的，計數器會走「第一次」分支——若放行到真實端點，每跑一次
+   測試就會對正式計數累加 6 次以上。stub 掉之後測試既不會污染正式數字，
+   也不受外部服務可用性影響（page.__failedRequests 的斷言因此不會因
+   計數器不可達而失敗），且可斷言動詞是 POST 還是 GET。 */
+const COUNTER_STUB_COUNT = 42;
+const COUNTER_ROUTE = /^https:\/\/[^/]*views-counter[^/]*\//;
+
+async function stubCounter(context, log, { status = 200, count = COUNTER_STUB_COUNT } = {}) {
+  await context.route(COUNTER_ROUTE, (route) => {
+    log.push(route.request().method());
+    return route.fulfill({
+      status,
+      contentType: "application/json",
+      headers: { "Access-Control-Allow-Origin": "*" },
+      body: JSON.stringify({ count }),
+    });
+  });
+}
+
+async function newPage({ viewport, clipboardDenied = false, counterStub = {} } = {}) {
   const context = await browser.newContext({ viewport: { width: viewport, height: 900 }, reducedMotion: "reduce" });
+  const counterRequests = [];
+  await stubCounter(context, counterRequests, counterStub);
   if (clipboardDenied) {
     await context.addInitScript(() => {
       const clipboard = { writeText: () => Promise.reject(new Error("clipboard denied")) };
@@ -118,6 +140,7 @@ async function newPage({ viewport, clipboardDenied = false } = {}) {
   });
   page.__responses = [];
   page.on("response", (response) => page.__responses.push({ url: response.url(), status: response.status() }));
+  page.__counterRequests = counterRequests;
   return { context, page };
 }
 
