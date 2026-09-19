@@ -651,3 +651,55 @@ test("reduced-motion mode disables motion and retains live status, labels, and l
     await context.close();
   }
 });
+
+test("counter increments once per session and reads on later loads", { timeout: 60_000 }, async (t) => {
+  if (skipReason()) return t.skip(skipReason());
+  const { context, page } = await newPage({ viewport: 1280 });
+  try {
+    // 全新 context：sessionStorage 為空，應累加（POST）並顯示 stub 數字。
+    await load(page);
+    const line = page.locator("#hits-line");
+    assert.equal(await line.isHidden(), false, "計數成功後應顯示");
+    assert.equal((await page.locator("#hits").textContent()).trim(), COUNTER_STUB_COUNT.toLocaleString("zh-TW"));
+    assert.deepEqual(page.__counterRequests, ["POST"], "第一次載入應以 POST 累加");
+
+    // 同一 session 重新整理：只讀取（GET），不重複累加。
+    await load(page);
+    await page.waitForFunction(() => !document.getElementById("hits-line").hidden);
+    assert.deepEqual(page.__counterRequests, ["POST", "GET"], "重新整理應以 GET 讀取");
+    assert.equal(
+      await page.evaluate(() => sessionStorage.getItem("hits-counted:idle-creator-journey")),
+      "1",
+      "累加成功後應寫入 sessionStorage 記號"
+    );
+  } finally {
+    await context.close();
+  }
+});
+
+test("counter failure is silent and does not mark the session as counted", { timeout: 60_000 }, async (t) => {
+  if (skipReason()) return t.skip(skipReason());
+  // stub 成 500：模擬計數器後端不可用。
+  const { context, page } = await newPage({ viewport: 1280, counterStub: { status: 500 } });
+  try {
+    await load(page);
+    assert.equal(await page.locator("#hits-line").isHidden(), true, "失敗時應維持隱藏");
+    // 非 2xx 時瀏覽器網路層自己會記一則 "Failed to load resource"，那不是
+    // 應用程式的錯誤（app 的 .catch 保持靜默）。要斷言的是：除了這則瀏覽器
+    // 訊息外沒有其他 console error，且完全沒有未捕捉的 JS 例外。
+    const appConsoleErrors = (page.__consoleErrors ?? []).filter(
+      (message) => !/Failed to load resource/.test(message)
+    );
+    assert.deepEqual(appConsoleErrors, [], "計數失敗不得產生應用程式層級的 console error");
+    assert.deepEqual(page.__pageErrors ?? [], [], "計數失敗不得產生未捕捉的 page error");
+    // 不寫記號，下次瀏覽才會重試累加。
+    assert.equal(
+      await page.evaluate(() => sessionStorage.getItem("hits-counted:idle-creator-journey")),
+      null,
+      "失敗時不得寫入 sessionStorage 記號"
+    );
+    assert.equal(await page.locator("main#main-content").isVisible(), true, "主要內容不受影響");
+  } finally {
+    await context.close();
+  }
+});
